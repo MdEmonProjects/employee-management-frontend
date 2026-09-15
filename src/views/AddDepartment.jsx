@@ -13,7 +13,10 @@ export default function AddDepartment() {
     if (!name.trim()) return;
 
     try {
-      await createDepartment({ name: name.trim() }).unwrap();
+      await createDepartment({
+        name: name.trim(),
+        parentDepartmentId: null,
+      }).unwrap();
       dispatch(closeModal());
     } catch {
       // The API error is rendered below.
