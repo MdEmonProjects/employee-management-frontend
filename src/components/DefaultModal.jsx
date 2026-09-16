@@ -23,19 +23,11 @@ const DefaultModal = () => {
           }}
       >
         {/* Tailwind animation */}
-        <div
-          className={`w-full transform transition-all duration-300 ease-out
-            ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}`}
-        >
+        <div className={`w-full transform transition-all duration-300 ease-out ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}`}>
           <div className="bg-white rounded-lg shadow-lg relative w-full max-h-[90vh] overflow-y-auto" ref={scrollRef}>
             <div className="header pl-3 pr-2 pt-3 pb-2 border-0 border-slate-100 flex items-center justify-between">
-              {title && (
-                <h2 className="text-[18px] font-bold">{title}</h2>
-              )}
-              <button
-                onClick={() => dispatch(closeModal())}
-                className="text-xl"
-              >
+              {title && ( <h2 className="text-[18px] font-bold">{title}</h2>)}
+              <button onClick={() => dispatch(closeModal())} className="text-xl">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width={24}

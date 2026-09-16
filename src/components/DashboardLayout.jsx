@@ -12,12 +12,7 @@ export default function DashboardLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#fcfcfb]">
-      {mobileSidebarOpen && (
-        <div
-          className="fixed inset-0 z-20 bg-black/30 md:hidden"
-          onClick={() => dispatch(closeMobileSidebar())}
-        />
-      )}
+      {mobileSidebarOpen && ( <div className="fixed inset-0 z-20 bg-black/30 md:hidden" onClick={() => dispatch(closeMobileSidebar())}/>)}
       <Sidebar />
       <main className="flex min-w-0 flex-1 flex-col bg-[#fcfcfb]">
         <div className="flex items-center gap-3 border-b border-gray-200 p-3 md:hidden">
