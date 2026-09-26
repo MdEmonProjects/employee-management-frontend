@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import DashboardLayout from './components/DashboardLayout';
 import Settings from './pages/Settings';
 import Departments from './pages/Departments';
+import UserEntry from './pages/UserEntry';
 
 export default function App() {
   return (
@@ -21,8 +22,8 @@ export default function App() {
           }
         >
           <Route index element={<Dashboard />} />
-          <Route path="projects" element={<EmptyPage />} />
-          <Route path="files" element={<EmptyPage />} />
+          <Route path="dashboard" element={<EmptyPage />} />
+          <Route path="userlist" element={<UserEntry />} />
           <Route path="settings" element={<Settings />} />
           <Route path="departments" element={<Departments />} />
         </Route>

@@ -76,7 +76,7 @@ export default function Sidebar() {
       ref={asideRef}
       style={!sidebarCollapsed ? { width: sidebarWidth } : undefined}
       className={`
-        fixed inset-y-0 left-0 z-30 flex flex-col border-r border-gray-200 bg-gray-50
+        fixed inset-y-0 left-0 z-40 flex flex-col border-r border-gray-200 bg-gray-50
         md:static md:translate-x-0
         ${isResizingSidebar ? '' : 'transition-[transform,width] duration-200 ease-out'}
         ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -84,28 +84,52 @@ export default function Sidebar() {
         w-64
       `}
     >
+
       <div className="flex items-center gap-2 p-3">
         <div className={`flex flex-1 items-center gap-2 ${sidebarCollapsed ? 'md:justify-center' : ''}`}>
           <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-clay text-sm font-bold text-white">D</div>
           <span className={`text-[15px] font-semibold text-gray-900 ${sidebarCollapsed ? 'md:hidden' : ''}`}>Dashboard</span>
         </div>
-        <button
+        {/* <button
           onClick={() => dispatch(toggleUiSidebarCollapsed())}
-          className="hidden h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 md:flex"
+          className="hidden h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 md:flex ml-[14px]"
           title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
             <rect x="3" y="4" width="14" height="12" rx="2" stroke="currentColor" strokeWidth="1.4" />
             <path d="M8 4v12" stroke="currentColor" strokeWidth="1.4" />
           </svg>
-        </button>
-        <button
-          onClick={() => dispatch(closeUiMobileSidebar())}
-          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 md:hidden"
-        >
-          ×
-        </button>
+        </button> */}
       </div>
+      <button
+        type="button"
+        aria-label={mobileSidebarOpen ? 'সাইডবার বন্ধ করুন' : sidebarCollapsed ? 'সাইডবার প্রসারিত করুন' : 'সাইডবার সংকুচিত করুন'}
+        aria-expanded={mobileSidebarOpen || !sidebarCollapsed}
+        onClick={() => {
+          if (window.matchMedia('(min-width: 768px)').matches) {
+            dispatch(toggleUiSidebarCollapsed());
+          } else {
+            dispatch(closeUiMobileSidebar());
+          }
+        }}
+        className="absolute inset-e-0 top-8 z-[100] inline-flex size-7 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-brand-600 text-white shadow-md ring-2 ring-surface transition-colors hover:bg-brand-700 lg:top-10 rtl:-translate-x-1/2"
+      >
+        <svg
+          stroke="currentColor"
+          fill="none"
+          strokeWidth={2}
+          viewBox="0 0 24 24"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={`transition-transform duration-300 ${sidebarCollapsed ? 'md:rotate-180' : ''}`}
+          aria-hidden="true"
+          height={16}
+          width={16}
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path d="m15 18-6-6 6-6" />
+        </svg>
+      </button>
 
       {/* <div className="px-2 pb-1">
         <button

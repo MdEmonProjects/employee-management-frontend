@@ -1,16 +1,16 @@
 export const menuData = [
   {
     id: '1',
-    name: 'Projects',
-    route: 'projects',
-    icon: 'UserPlus',
+    name: 'Dashboard',
+    route: 'dashboard',
+    icon: 'Dashboard',
     subMenu: false,
   },
   {
     id: '2',
-    name: 'Files',
-    route: 'files',
-    icon: 'TbPlus',
+    name: 'User List',
+    route: 'userlist',
+    icon: 'UserPlus',
     subMenu: false,
   },
   {
