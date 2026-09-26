@@ -1,21 +1,21 @@
 export const menuData = [
   {
     id: '1',
-    name: 'Dashboard',
+    name: 'ড্যাশবোর্ড',
     route: 'dashboard',
     icon: 'Dashboard',
     subMenu: false,
   },
   {
     id: '2',
-    name: 'User List',
+    name: 'ব্যবহারকারীর তালিকা',
     route: 'userlist',
     icon: 'UserPlus',
     subMenu: false,
   },
   {
     id: '3',
-    name: 'Settings',
+    name: 'সেটিংস',
     route: 'settings',
     icon: 'IoMdSettings',
     subMenu: false,

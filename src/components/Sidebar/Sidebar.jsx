@@ -88,7 +88,7 @@ export default function Sidebar() {
       <div className="flex items-center gap-2 p-3">
         <div className={`flex flex-1 items-center gap-2 ${sidebarCollapsed ? 'md:justify-center' : ''}`}>
           <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-clay text-sm font-bold text-white">D</div>
-          <span className={`text-[15px] font-semibold text-gray-900 ${sidebarCollapsed ? 'md:hidden' : ''}`}>Dashboard</span>
+          <span className={`text-[20px] font-semibold text-gray-900 ${sidebarCollapsed ? 'md:hidden' : ''}`}>সাইডবার</span>
         </div>
         {/* <button
           onClick={() => dispatch(toggleUiSidebarCollapsed())}
@@ -149,7 +149,7 @@ export default function Sidebar() {
             to={`/dashboard/${item.route}`}
             end
             onClick={() => dispatch(closeUiMobileSidebar())}
-            className={({ isActive }) => `flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm ${isActive ? 'bg-white font-medium text-gray-900' : 'text-gray-600 hover:bg-gray-100'} ${sidebarCollapsed ? 'md:justify-center' : ''}`}
+            className={({ isActive }) => `flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-[18px] ${isActive ? 'bg-white font-medium text-gray-900' : 'text-gray-600 hover:bg-gray-100'} ${sidebarCollapsed ? 'md:justify-center' : ''}`}
             title={item.name}
           >
             <SvgIcon name={item.icon} />

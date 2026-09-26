@@ -161,9 +161,9 @@ export default function DashboardLayout() {
                 </div>
               </div>
             </header>
-            <div className="overflow-hidden border-b border-border/50 bg-section-header px-3 py-1.5 text-xs text-muted sm:px-6">
+            {/* <div className="overflow-hidden border-b border-border/50 bg-section-header px-3 py-1.5 text-xs text-muted sm:px-6">
               <p className="truncate font-bengali">জরুরি বিজ্ঞপ্তি: পরীক্ষার্থী নিবন্ধন কার্যক্রম চলমান রয়েছে। নির্ধারিত সময়ের মধ্যে তথ্য যাচাই করুন।</p>
-            </div>
+            </div> */}
           </div>
 
           <main className="min-h-0 flex-1 bg-dashboard-workspace">
