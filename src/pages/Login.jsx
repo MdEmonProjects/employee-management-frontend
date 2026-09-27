@@ -26,11 +26,11 @@ export default function Login() {
   const onSubmit = async (data) => {
     try {
       const result = await login(data).unwrap();
-      localStorage.setItem('token', result.accessToken);
+      localStorage.setItem('token', result.token);
       dispatch(
         loginSuccess({
-          email: data.email,
-          name: data.email.split('@')[0],
+          ...result.user,
+          name: result.user.username,
         }),
       );
       navigate(from, { replace: true });
@@ -61,23 +61,36 @@ export default function Login() {
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
           <label className="block text-sm font-medium text-gray-700">
-            <span>Email</span>
+            <span>Madrasha Code</span>
             <input
-              type="email"
-              autoComplete="email"
-              placeholder="you@example.com"
+              type="text"
+              autoComplete="school_id"
+              placeholder="1234"
               className="mt-1.5 w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none focus:border-clay"
-              {...register('email', {
+              {...register('school_id', {
                 required: 'Email is required',
-                pattern: {
-                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                  message: 'Enter a valid email address',
-                },
               })}
             />
-            {errors.email && (
+            {errors.school_id && (
               <span className="mt-1 block text-xs font-normal text-clay-dark">
-                {errors.email.message}
+                {errors.school_id.message}
+              </span>
+            )}
+          </label>
+          <label className="block text-sm font-medium text-gray-700">
+            <span>Username</span>
+            <input
+              type="text"
+              autoComplete="username"
+              placeholder="username"
+              className="mt-1.5 w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none focus:border-clay"
+              {...register('username', {
+                required: 'Username is required',
+              })}
+            />
+            {errors.username && (
+              <span className="mt-1 block text-xs font-normal text-clay-dark">
+                {errors.username.message}
               </span>
             )}
           </label>
@@ -91,7 +104,6 @@ export default function Login() {
               className="mt-1.5 w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none focus:border-clay"
               {...register('password', {
                 required: 'Password is required',
-                minLength: { value: 8, message: 'At least 8 characters' },
               })}
             />
             {errors.password && (
