@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useRef } from 'react';
 import AddDepartment from '../views/AddDepartment';
 import ClickOutside from './ClickOutside';
+import AddClass from '../views/AddClass';
 
 const DefaultModal = () => {
   const { isOpen, title, modalType, id, meta } = useSelector((state) => state.modal);
@@ -49,6 +50,7 @@ const DefaultModal = () => {
             {modalType && (
               <div className="body p-3">
                 {modalType === 'ADD_DEPARTMENTS' && <AddDepartment userId={id} />}
+                {modalType === 'CLASS_ENTRY' && <AddClass />}
               </div>
             )}
           </div>
