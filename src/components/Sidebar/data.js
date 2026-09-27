@@ -8,10 +8,25 @@ export const menuData = [
   },
   {
     id: '2',
-    name: 'ব্যবহারকারীর তালিকা',
-    route: 'userlist',
+    name: 'নিবন্ধন সংক্রান্ত',
+    route: 'academic',
     icon: 'UserPlus',
-    subMenu: false,
+    subMenu: [
+      {
+        id: '21',
+        name: 'ব্যবহারকারীর তালিকা',
+        route: 'userlist',
+        icon: '',
+        subMenu: false,
+      },
+      {
+        id: '22',
+        name: 'ক্লাস গ্রুপ',
+        route: 'classlist',
+        icon: '',
+        subMenu: false,
+      }
+    ],
   },
   {
     id: '3',

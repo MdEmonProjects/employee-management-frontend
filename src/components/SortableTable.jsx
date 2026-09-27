@@ -60,20 +60,18 @@ const SortableTable = ({
     end: 'text-right',
   };
   return (
-    <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
-      <table className="w-full text-sm text-left text-gray-500">
-        <thead
-          className={`text-xs sm:text-sm text-theme-dark font-default uppercase bg-gray-50`}
-        >
+    <div className="overflow-x-auto rounded-md border border-border">
+      <table className="table__content min-w-full text-sm w-full"  role="grid" tabIndex={-1}>
+        <thead className={`table__header border-b border-border bg-surface-secondary/60`} role="grid">
           <tr>
             {columns.map((column, index) => (
               <th
                 key={index}
-                className={`px-3 py-3 text-nowrap ${
+                className={`table__column px-3 py-3 text-[16px] font-semibold text-muted whitespace-nowrap rounded-none sm:px-4 text-left ${
                   alignClass[column.hozAlign] || 'text-left'
                 }`}
               >
-                <div >
+                <div className='inline-flex w-full items-center gap-1 justify-start'>
                   <span>{column.title}</span>
                   {column.hasCheckbox && onCheckboxChange && (
                     <input
@@ -168,17 +166,17 @@ const SortableTable = ({
             </tr>
           )}
         </thead>
-        <tbody>
+        <tbody className='table__body divide-y divide-border'>
           {filteredData && filteredData.map((row, rowIndex) => (
             <tr
               key={rowIndex}
-              className="odd:bg-neutral-primary even:bg-neutral-secondary-soft border-b border-gray-200"
+              className="table__row hover:bg-brand-50/20 transition-colors"
               onClick={() => onRowClick && onRowClick(row)}
             >
               {columns.map((column, cellIndex) => (
                 <td
                   key={cellIndex}
-                  className={`px-3 py-4 font-medium text-theme-dark ${rowWrap ? 'whitespace-nowrap' : 'whitespace-wrap'}  font-default text-${
+                  className={`ptable__cell px-3 py-3 text-foreground align-middle sm:px-4 text-left text-[17px] ${rowWrap ? 'whitespace-nowrap' : 'whitespace-wrap'}  font-default text-${
                     column.hozAlign || 'start'
                   } ${tdclass}`}
                 >

@@ -8,8 +8,8 @@
   --accent-foreground: oklch(100% 0 0);
   --accent-soft: oklch(95% .04 163);
   --accent-soft-foreground: oklch(35% .12 163);
-  --cta: oklch(67.5% .19 47);
-  --cta-hover: oklch(60% .19 47);
+  --color-cta: #f06800;
+  --color-cta-hover: #d54f00;
   --cta-foreground: oklch(100% 0 0);
   --focus: var(--accent);
   --link: oklch(50% .17 163);
@@ -26,7 +26,8 @@
   --section-header: #f1f7f0;
   --icon-bg: #f2f2f2;
   --btn-subtle: #eee;
-  --brand-icon-bg: #e5f2ec;
+  --clay-icon-bg: #e5f2ec;
+  --brand-icon-bg: #f5e9e0;
   --logout-btn-bg: #f3f6f2;
   --logout-btn-hover: #e8ebe7;
   --filter-chip-bg: #3cdeac0d;
@@ -65,7 +66,7 @@
   --color-clay-dark: #B15E3D;
   --color-line: #E5E5E1;
 
-  --color-brand-50: #ecfdf5;
+  --color-brand-50: #fdf3ec;
   --color-brand-100: #d1fae5;
   --color-brand-200: #a7f3d0;
   --color-brand-300: #6ee7b7;
@@ -107,6 +108,28 @@
   --shadow-surface: var(--surface-shadow);
   --shadow-overlay: var(--overlay-shadow);
   --border-width-field: var(--field-border-width, var(--border-width));
+
+
+
+
+  --text-xs: .75rem;
+  --text-xs--line-height: calc(1 / .75);
+  --text-sm: .875rem;
+  --text-sm--line-height: calc(1.25 / .875);
+  --text-base: 1rem;
+  --text-base--line-height: calc(1.5 / 1);
+  --text-lg: 1.125rem;
+  --text-lg--line-height: calc(1.75 / 1.125);
+  --text-xl: 1.25rem;
+  --text-xl--line-height: calc(1.75 / 1.25);
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: calc(2 / 1.5);
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: calc(2.25 / 1.875);
+  --text-4xl: 2.25rem;
+  --text-4xl--line-height: calc(2.5 / 2.25);
+  --text-5xl: 3rem;
+  --text-5xl--line-height: 1;
 }
 
 html,

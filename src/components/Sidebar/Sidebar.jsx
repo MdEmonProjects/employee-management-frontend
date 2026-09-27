@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { logout } from '../../features/auth/authSlice';
 import {
   deleteConversation,
@@ -20,12 +20,20 @@ import { menuData } from './data';
 export default function Sidebar() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const user = useSelector((state) => state.auth.user);
   const { conversations, activeConversationId } = useSelector((state) => state.chat);
   const { mobileSidebarOpen, sidebarCollapsed, sidebarWidth, isResizingSidebar } = useSelector(
     (state) => state.ui
   );
   const [menuOpen, setMenuOpen] = useState(false);
+  const [openSubmenuId, setOpenSubmenuId] = useState(() => {
+    const activeParent = menuData.find((item) =>
+      Array.isArray(item.subMenu) &&
+      item.subMenu.some((subItem) => location.pathname === `/dashboard/${item.route}/${subItem.route}`)
+    );
+    return activeParent?.id ?? null;
+  });
   const asideRef = useRef(null);
 
   const handleResizeMove = useCallback(
@@ -112,7 +120,7 @@ export default function Sidebar() {
             dispatch(closeUiMobileSidebar());
           }
         }}
-        className="absolute inset-e-0 top-8 z-[100] inline-flex size-7 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-brand-600 text-white shadow-md ring-2 ring-surface transition-colors hover:bg-brand-700 lg:top-10 rtl:-translate-x-1/2"
+        className="absolute inset-e-0 top-8 z-[100] inline-flex size-7 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-clay text-white shadow-md ring-2 ring-surface transition-colors hover:bg-brand-700 lg:top-10 rtl:-translate-x-1/2"
       >
         <svg
           stroke="currentColor"
@@ -143,19 +151,67 @@ export default function Sidebar() {
       </div> */}
 
       <nav className="mt-1 space-y-0.5 px-2">
-        {menuData.map((item) => (
-          <NavLink
-            key={item.id}
-            to={`/dashboard/${item.route}`}
-            end
-            onClick={() => dispatch(closeUiMobileSidebar())}
-            className={({ isActive }) => `flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-[18px] ${isActive ? 'bg-white font-medium text-gray-900' : 'text-gray-600 hover:bg-gray-100'} ${sidebarCollapsed ? 'md:justify-center' : ''}`}
-            title={item.name}
-          >
-            <SvgIcon name={item.icon} />
-            <span className={sidebarCollapsed ? 'md:hidden' : ''}>{item.name}</span>
-          </NavLink>
-        ))}
+        {menuData.map((item) => {
+          const hasSubmenu = Array.isArray(item.subMenu) && item.subMenu.length > 0;
+          const isSubmenuOpen = openSubmenuId === item.id;
+          const hasActiveChild = Array.isArray(item.subMenu) && item.subMenu.some(
+            (subItem) => location.pathname === `/dashboard/${item.route}/${subItem.route}`
+          );
+          const rowClassName = `flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-[18px] ${hasActiveChild ? 'bg-white font-medium text-gray-900' : 'text-gray-600 hover:bg-gray-100'} ${sidebarCollapsed ? 'md:justify-center' : ''}`;
+
+          return (
+            <div key={item.id}>
+              {hasSubmenu ? (
+                <button
+                  type="button"
+                  aria-expanded={isSubmenuOpen}
+                  onClick={() => setOpenSubmenuId(isSubmenuOpen ? null : item.id)}
+                  className={rowClassName}
+                  title={item.name}
+                >
+                  <SvgIcon name={item.icon} />
+                  <span className={`flex-1 ${sidebarCollapsed ? 'md:hidden' : ''}`}>{item.name}</span>
+                  <svg
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    className={`h-4 w-4 transition-transform ${isSubmenuOpen ? 'rotate-180' : ''} ${sidebarCollapsed ? 'md:hidden' : ''}`}
+                    aria-hidden="true"
+                  >
+                    <path d="m5 7.5 5 5 5-5" />
+                  </svg>
+                </button>
+              ) : (
+                <NavLink
+                  to={`/dashboard/${item.route}`}
+                  end
+                  onClick={() => dispatch(closeUiMobileSidebar())}
+                  className={({ isActive }) => `flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-[18px] ${isActive ? 'bg-white font-medium text-gray-900' : 'text-gray-600 hover:bg-gray-100'} ${sidebarCollapsed ? 'md:justify-center' : ''}`}
+                  title={item.name}
+                >
+                  <SvgIcon name={item.icon} />
+                  <span className={sidebarCollapsed ? 'md:hidden' : ''}>{item.name}</span>
+                </NavLink>
+              )}
+              {hasSubmenu && isSubmenuOpen && (
+                <div className={`mt-0.5 space-y-0.5 pl-5 ${sidebarCollapsed ? 'md:hidden' : ''}`}>
+                  {item.subMenu.map((subItem) => (
+                    <NavLink
+                      key={subItem.id}
+                      to={`/dashboard/${item.route}/${subItem.route}`}
+                      onClick={() => dispatch(closeUiMobileSidebar())}
+                      className={({ isActive }) => `flex items-center gap-3 rounded-lg px-2.5 py-2 text-[18px] ${isActive ? 'bg-white font-medium text-gray-900' : 'text-gray-600 hover:bg-gray-100'}`}
+                    >
+                      <SvgIcon name={subItem.icon} />
+                      <span>{subItem.name}</span>
+                    </NavLink>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </nav>
 
       {/* <div className={`mt-3 px-4 text-xs font-medium text-gray-400 ${sidebarCollapsed ? 'md:hidden' : ''}`}>Recents</div> */}

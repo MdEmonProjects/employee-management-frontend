@@ -37,70 +37,65 @@ export default function DashboardLayout() {
                   </svg>
                 </button> */}
                 <div className="min-w-0 flex-1 lg:hidden" aria-label="মাদরাসার তথ্য">
-                  <p className="text-xs font-semibold leading-tight text-brand-600 whitespace-normal wrap-break-word font-bengali">
+                  <p className="text-xs font-semibold leading-tight text-clay whitespace-normal wrap-break-word font-bengali">
                     ইক্বরা বালিকা মাদরাসা (অনাবাসিক), ৩৩, প্রধান সড়ক, কল্যাণপুর, মিরপুর,
                     ঢাকা-১২০৭, মিরপুর, ঢাকা (মহানগর)
                   </p>
                   <p className="truncate text-[11px] leading-tight text-muted">
                     কোড B00015153
                   </p>
-                  <p className="text-[11px] leading-snug whitespace-normal wrap-break-word font-bengali">
+                  {/* <p className="text-[11px] leading-snug whitespace-normal wrap-break-word font-bengali">
                     <span className="font-normal text-muted">মারকায </span>
                     <span className="font-semibold text-foreground">
                       দরসিয়াত — উম্মুল মুমেনীন হযরত আয়েশা সিদ্দিকা (রাঃ) বালিকা মাদরাসা
                     </span>
-                  </p>
+                  </p> */}
                 </div>
-                <div
-                  className="hidden lg:flex flex-1 grow min-w-0 flex-col justify-center items-center gap-1.5"
-                  aria-label="মাদরাসার তথ্য"
-                >
+                <div className="hidden lg:flex flex-1 grow min-w-0 flex-col justify-center items-center gap-1.5" aria-label="মাদরাসার তথ্য">
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 leading-snug">
-                    <p className="text-xl font-semibold leading-snug text-brand-600 whitespace-normal wrap-break-word font-bengali">
+                    <p className="text-xl font-semibold leading-snug text-clay whitespace-normal wrap-break-word font-bengali">
                       ইক্বরা বালিকা মাদরাসা (অনাবাসিক), ৩৩, প্রধান সড়ক, কল্যাণপুর, মিরপুর,
                       ঢাকা-১২০৭, মিরপুর, ঢাকা (মহানগর)
                     </p>
-                    <span className="inline-flex items-center gap-1.5 whitespace-normal">
+                    {/* <span className="inline-flex items-center gap-1.5 whitespace-normal">
                       <span className="shrink-0 text-sm text-muted">ইলহাক</span>
                       <span className="text-sm font-semibold wrap-break-word text-brand-600">
                         ম-3/5116
                       </span>
-                    </span>
+                    </span> */}
                     <span className="inline-flex items-center gap-1.5 whitespace-normal">
                       <span className="shrink-0 text-sm text-muted">কোড</span>
-                      <span className="text-sm font-semibold wrap-break-word text-brand-600">
+                      <span className="text-sm font-semibold wrap-break-word text-clay">
                         B00015153
                       </span>
                     </span>
-                    <span className="inline-flex items-center gap-1.5 whitespace-normal">
+                    {/* <span className="inline-flex items-center gap-1.5 whitespace-normal">
                       <span className="shrink-0 text-sm text-muted">
                         সর্বোচ্চ মারহালা
                       </span>
                       <span className="text-sm font-semibold wrap-break-word text-brand-600 font-bengali">
                         সানাবিয়া উলিয়া
                       </span>
-                    </span>
+                    </span> */}
                   </div>
-                  <div className="flex text-sm font-semibold flex-wrap items-center gap-x-4 gap-y-1 leading-snug">
+                  {/* <div className="flex text-sm font-semibold flex-wrap items-center gap-x-4 gap-y-1 leading-snug">
                     <span className="inline-flex items-center gap-1.5 whitespace-normal">
                       <span className="shrink-0 text-sm text-muted">মারকায</span>
                       <span className="text-sm font-semibold wrap-break-word font-bengali">
                         দরসিয়াত — উম্মুল মুমেনীন হযরত আয়েশা সিদ্দিকা (রাঃ) বালিকা মাদরাসা
                       </span>
                     </span>
-                  </div>
+                  </div> */}
                 </div>
               </div>
               <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
                 <button
                   data-slot="button"
-                  className="button button--sm button--ghost w-9 h-9 bg-surface-secondary text-foreground"
+                  className="button flex items-center justify-center w-9 h-9 bg-surface-secondary text-foreground rounded-full"
                   data-rac=""
                   type="button"
                   tabIndex={0}
-                  data-react-aria-pressable="true"
                   aria-label="Notifications"
-                  id="react-aria9614000272-_r_8_"
                 >
                   <svg
                     stroke="currentColor"
@@ -119,13 +114,11 @@ export default function DashboardLayout() {
                 </button>
                 <button
                   data-slot="button"
-                  className="button button--sm button--ghost w-9 h-9 bg-surface-secondary text-foreground"
-                  data-rac=""
+                  className="button flex items-center justify-center w-9 h-9 bg-surface-secondary text-foreground text-center rounded-full"
                   type="button"
                   tabIndex={0}
                   data-react-aria-pressable="true"
                   aria-label="ডার্ক মোডে যান"
-                  id="react-aria9614000272-_r_a_"
                 >
                   <svg
                     stroke="currentColor"
@@ -143,19 +136,16 @@ export default function DashboardLayout() {
                 </button>
                 <div
                   className="hidden sm:flex popover__trigger ps-2 items-center gap-2.5 cursor-pointer rounded-lg transition-opacity hover:opacity-90 outline-none"
-                  data-slot="popover-trigger"
                   role="button"
                   aria-label="ব্যবহারকারী মেনু"
                   aria-expanded="false"
-                  id="react-aria9614000272-_r_d_"
-                  data-react-aria-pressable="true"
                   tabIndex={0}
                 >
                   <div className="w-9 h-9 text-sm rounded-full bg-brand-600 text-white flex items-center justify-center font-semibold shrink-0 font-bengali">
                     <img
                       alt=""
                       className="w-full h-full rounded-full object-cover"
-                      src="https://api.bems.befaqbd.org/media/users/profile_pictures/WhatsApp_Image_2026-08-23_at_3.06.59_PM.jpg?token=InVzZXJzL3Byb2ZpbGVfcGljdHVyZXMvV2hhdHNBcHBfSW1hZ2VfMjAyNi0wOC0yM19hdF8zLjA2LjU5X1BNLmpwZyI:1xAPts:Y8GEbm3oyIUOTxJpTUcd5OFzeBPDjcUUuF1nML8o4U8"
+                      src="https://qmmsoft.com/avatar.png?token=InVzZXJzL3Byb2ZpbGVfcGljdHVyZXMvV2hhdHNBcHBfSW1hZ2VfMjAyNi0wOC0yM19hdF8zLjA2LjU5X1BNLmpwZyI:1xAPts:Y8GEbm3oyIUOTxJpTUcd5OFzeBPDjcUUuF1nML8o4U8"
                     />
                   </div>
                 </div>

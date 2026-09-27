@@ -7,6 +7,7 @@ import DashboardLayout from './components/DashboardLayout';
 import Settings from './pages/Settings';
 import Departments from './pages/Departments';
 import UserEntry from './pages/UserEntry';
+import ClassList from './pages/ClassList';
 
 export default function App() {
   return (
@@ -23,7 +24,12 @@ export default function App() {
         >
           <Route index element={<Dashboard />} />
           <Route path="dashboard" element={<EmptyPage />} />
-          <Route path="userlist" element={<UserEntry />} />
+
+          <Route path="academic">
+            <Route path="userlist" element={<UserEntry />} />
+            <Route path="classlist" element={<ClassList />} />
+          </Route>
+          
           <Route path="settings" element={<Settings />} />
           <Route path="departments" element={<Departments />} />
         </Route>
