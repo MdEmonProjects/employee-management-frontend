@@ -2,13 +2,13 @@
 import { useForm } from 'react-hook-form';
 import { useDispatch } from 'react-redux';
 import { closeModal } from '../features/modal/modalSlice';
-import { useCreateDepartmentMutation } from '../features/department/departmentQuerySlice';
-
+import { useCreateClassMutation } from '../features/class/classQuerySlice';
+import { toast } from 'react-toastify';
 export default function AddClass() {
   const dispatch = useDispatch();
 
-  const [createDepartment, { isLoading, error }] =
-    useCreateDepartmentMutation();
+  const [createClass, { isLoading, error }] =
+    useCreateClassMutation();
 
   const {
     register,
@@ -24,15 +24,23 @@ export default function AddClass() {
 
   const onSubmit = async (data) => {
     try {
-      await createDepartment({
+      await createClass({
         ClassName: data.ClassName.trim(),
         EnglishClass: data.EnglishClass.trim() || null,
         ArabicClass: data.ArabicClass.trim() || null,
       }).unwrap();
+      // toast(DefaultModal, {})
+      toast.success('Class created successfully!', {
+        progressStyle: {
+          background: '#C9724F',
+        },
+      });
 
       dispatch(closeModal());
-    } catch {
-      // API error is rendered below.
+    } catch (error) {
+      toast.error(
+        error?.data?.message || 'Failed to create class. Please try again.'
+      );
     }
   };
 

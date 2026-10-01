@@ -35,7 +35,7 @@ const baseQuery = fetchBaseQuery({
   },
 });
 
-export const departmentSlice = createApi({
+export const departmentQuerySlice = createApi({
   reducerPath: "department",
   baseQuery: async (args, api, extraOptions) => {
     const result = await baseQuery(args, api, extraOptions);
@@ -80,4 +80,4 @@ export const {
   useCreateDepartmentMutation,
   useUpdateDepartmentMutation,
   useDeleteDepartmentMutation,
-} = departmentSlice;
+} = departmentQuerySlice;

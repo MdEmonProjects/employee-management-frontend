@@ -1,74 +1,62 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import SvgIcon from '../components/icons/SvgIcon';
-
-const EXAMINEES = Array.from({ length: 20 }, (_, index) => ({
-  applicationId: `EX-2026-${String(index + 1).padStart(4, '0')}`,
-  name: ['আব্দুল্লাহ আল মামুন', 'মুহাম্মদ আবু বকর', 'আব্দুর রহমান', 'মোঃ ইব্রাহিম'][index % 4],
-  father: ['মোঃ আব্দুল করিম', 'মোঃ আব্দুল জলিল', 'মোঃ নুরুল ইসলাম', 'মোঃ আব্দুল হক'][index % 4],
-  dob: `200${index % 5}-0${(index % 8) + 1}-1${index % 9}`,
-  marhala: ['সানাবিয়া উলইয়া', 'ফযীলত', 'তাকমীল'][index % 3],
-  studentType: index % 2 === 0 ? 'Regular' : 'Private',
-  applicationDate: `2026-08-${String((index % 20) + 1).padStart(2, '0')}`,
-  attachments: index % 3 === 0 ? 1 : 2,
-  payment: 'Unpaid',
-  status: 'Pending',
-  exam: ['Dakhil', 'Alim', 'Fazil'][index % 3],
-}));
-
-const FILTERS = [
-  { key: 'exam', label: 'Exam', options: ['All exams', 'Dakhil', 'Alim', 'Fazil'] },
-  { key: 'marhala', label: 'Marhala', options: ['All marhalas', 'সানাবিয়া উলইয়া', 'ফযীলত', 'তাকমীল'] },
-  { key: 'status', label: 'Status', options: ['All statuses', 'Pending'] },
-  { key: 'studentType', label: 'Student type', options: ['All types', 'Regular', 'Private'] },
-];
+import { FormProvider, useForm } from 'react-hook-form';
+import PhoneNumberInput from '../components/PhoneNumberInput';
+import { useParams } from 'react-router-dom';
+import DefaultInput from '../components/DefaultInput';
+import DefaultSelect from '../components/DefaultSelect';
+import { useGetSessionsQuery } from '../features/session/sessionQuerySlice';
+import { useCreateUserMutation } from '../features/user/userQuerySlice';
+import { toast } from 'react-toastify';
 
 export default function UserEntry() {
-  const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState({ exam: '', marhala: '', status: '', studentType: '' });
-  const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const methods = useForm();
+  const { handleSubmit, setValue } = methods;
 
-  const filteredExaminees = useMemo(() => EXAMINEES.filter((examinee) => {
-    const matchesSearch = `${examinee.applicationId} ${examinee.name} ${examinee.father}`
-      .toLowerCase()
-      .includes(search.toLowerCase());
-    return matchesSearch && Object.entries(filters).every(([key, value]) => !value || examinee[key] === value);
-  }), [filters, search]);
-  const pageCount = Math.max(1, Math.ceil(filteredExaminees.length / pageSize));
-  const visibleExaminees = filteredExaminees.slice((page - 1) * pageSize, page * pageSize);
-  const firstRecord = filteredExaminees.length === 0 ? 0 : (page - 1) * pageSize + 1;
-  const lastRecord = Math.min(page * pageSize, filteredExaminees.length);
+  const {
+    data: sessionList,
+    isLoading: isSessionLoading,
+    isError: isSessionError,
+  } = useGetSessionsQuery();
+  const { classid } = useParams();
+  const [createUser, { isLoading, error }] = useCreateUserMutation();
 
-  const updateFilter = (key, value) => {
-    setFilters((current) => ({ ...current, [key]: value }));
-    setPage(1);
+  useEffect(()=>{
+    if(classid){
+      setValue("ClassID", classid)
+    }
+  }, [classid])
+
+  const onSubmit = async (data) => {
+    console.log(data);
+    
+    try {
+      await createUser(data).unwrap();
+      toast.success('Student created successfully!', {
+        progressStyle: {
+          background: '#C9724F',
+        },
+      });
+    } catch (error) {
+      toast.error(
+        error?.data?.message || 'Failed to add student. Please try again.'
+      );
+    }
   };
+  return (
 
-  const columns = [
-    ['App ID', 'applicationId'],
-    ['Name', 'name'],
-    ['Father', 'father'],
-    ['DOB', 'dob'],
-    ['Marhala', 'marhala'],
-    ['Type', 'studentType'],
-    ['Date', 'applicationDate'],
-    ['Attachments', 'attachments'],
-    ['Payment', 'payment'],
-    ['Status', 'status'],
-  ];
-
-    return (
     <div className="mx-auto w-full max-w-[1600px] px-3 py-4 sm:px-5 sm:py-6 lg:px-8">
+
       <nav aria-label="Breadcrumb" className="mb-4 flex min-w-0 items-center gap-2 text-sm text-muted">
-        <a href="/dashboard" className="shrink-0 hover:text-foreground">Home</a>
+        <a href="/dashboard" className="shrink-0 hover:text-foreground">হোম</a>
         <svg aria-hidden="true" className="size-4 shrink-0 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="m9 18 6-6-6-6" />
         </svg>
-        <span className="shrink-0">Registration</span>
+        <span className="shrink-0">নিবন্ধন সংক্রান্ত</span>
         <svg aria-hidden="true" className="size-4 shrink-0 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="m9 18 6-6-6-6" />
         </svg>
-        <span aria-current="page" className="truncate font-medium text-foreground">Examinee Registration</span>
+        <span aria-current="page" className="truncate font-medium text-foreground">শিক্ষাথী নিবন্ধন</span>
       </nav>
 
       <section className="overflow-hidden rounded-md border border-border bg-surface">
@@ -78,92 +66,91 @@ export default function UserEntry() {
               <SvgIcon name="UserList" size={22} />
             </span>
             <div className="min-w-0">
-              <h1 className="truncate text-lg font-semibold text-foreground">Examinee Registration</h1>
-              <p className="text-sm text-muted">পরীক্ষার্থীর তালিকা</p>
+              <h1 className="truncate text-lg font-semibold text-foreground">শিক্ষাথী নিবন্ধন ফর্ম</h1>
+              <p className="text-sm text-muted">ব্যক্তিগত তথ্য</p>
             </div>
-                    </div>
-          <button type="button" className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:bg-accent-hover">
+          </div>
+          {/* <button type="button" className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:bg-accent-hover">
             <SvgIcon name="TbPlus" size={18} />
             New Registration
-          </button>
+          </button> */}
         </header>
 
         <div className="space-y-4 p-4 sm:p-6">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
-            <label className="relative block sm:col-span-2 xl:col-span-1">
-              <span className="sr-only">Search examinees</span>
-              <svg aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.35-4.35" />
-              </svg>
-              <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Search by name or app ID" className="h-10 w-full rounded-md border border-border bg-surface px-3 pl-9 text-sm text-foreground outline-none focus:border-accent" />
-            </label>
-            {FILTERS.map((filter) => (
-              <label key={filter.key} className="block">
-                <span className="sr-only">Filter by {filter.label}</span>
-                <select value={filters[filter.key]} onChange={(event) => updateFilter(filter.key, event.target.value)} className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm text-foreground outline-none focus:border-accent">
-                  {filter.options.map((option, index) => <option key={option} value={index === 0 ? '' : option}>{option}</option>)}
-                </select>
-              </label>
-            ))}
-          </div>
+          {/* <h2 className="text-lg font-semibold text-foreground mb-1">
+            শিক্ষাথী নিবন্ধন ফর্ম — ব্যক্তিগত তথ্য
+          </h2> */}
+          {/* <p className="text-sm text-muted mb-4">
+            নির্বাচিত বোর্ড: বেফাকুল মাদারিসিল আরাবিয়া বাংলাদেশ
+          </p> */}
+          <FormProvider {...methods}>
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <div className="space-y-8">
+                {/* Section: User Info */}
+                <div className="grid md:grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-5">
 
-          <div className="flex flex-wrap items-center gap-2">
-            <button type="button" onClick={() => window.print()} className="inline-flex h-9 items-center gap-2 rounded-md border border-border bg-surface px-3 text-sm font-medium text-foreground hover:bg-surface-secondary">
-              <SvgIcon name="TbFileTypePdf" size={18} />
-              PDF Download
-            </button>
-            <button type="button" onClick={() => window.print()} className="inline-flex h-9 items-center gap-2 rounded-md border border-border bg-surface px-3 text-sm font-medium text-foreground hover:bg-surface-secondary">
-              <SvgIcon name="TbPrinter" size={18} />
-              Proof Copy Download
-            </button>
-          </div>
+                  <DefaultInput label={"নাম"} placeholder={"নাম"} registerKey={"UserName"} />
 
-          <div className="overflow-x-auto rounded-md border border-border">
-            <table className="w-full min-w-[1120px] border-collapse text-left text-sm">
-              <thead className="bg-table-header-bg text-xs font-semibold text-muted">
-                <tr>
-                  {columns.map(([label]) => <th key={label} scope="col" className="whitespace-nowrap px-3 py-3">{label}</th>)}
-                  <th scope="col" className="whitespace-nowrap px-3 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleExaminees.map((examinee) => (
-                  <tr key={examinee.applicationId} className="border-t border-border text-foreground even:bg-table-stripe">
-                    {columns.map(([, key]) => (
-                      <td key={key} className="whitespace-nowrap px-3 py-3">
-                        {key === 'attachments' ? `${examinee.attachments} files` : key === 'payment' ? <span className="rounded-full bg-warning/15 px-2 py-1 text-xs font-medium text-warning-foreground">{examinee[key]}</span> : key === 'status' ? <span className="rounded-full bg-warning/15 px-2 py-1 text-xs font-medium text-warning-foreground">{examinee[key]}</span> : examinee[key]}
-                      </td>
-                    ))}
-                    <td className="whitespace-nowrap px-3 py-3 text-right">
-                      <button type="button" aria-label={`View ${examinee.applicationId}`} className="inline-flex size-8 items-center justify-center rounded-md text-muted hover:bg-surface-tertiary hover:text-foreground">
-                        <svg aria-hidden="true" className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
-                          <circle cx="12" cy="12" r="3" />
-                        </svg>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {visibleExaminees.length === 0 && <tr><td colSpan={columns.length + 1} className="px-3 py-10 text-center text-muted">No examinees match these filters.</td></tr>}
-              </tbody>
-            </table>
-          </div>
+                  <DefaultSelect label={"লিঙ্গ"} options={[{ id: 1, value: "ছেলে" }, { id: 2, value: "মহিলা" }]} registerKey={"GenderID"} require={"Gender is Required"} nameField={"value"} valueField={"id"} />
 
-          <footer className="flex flex-col gap-3 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
-            <p>Showing {firstRecord}-{lastRecord} of {filteredExaminees.length}</p>
-            <div className="flex items-center gap-2 self-end sm:self-auto">
-              <span className="mr-2">Page {page} of {pageCount}</span>
-              <button type="button" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page === 1} aria-label="Previous page" className="inline-flex size-9 items-center justify-center rounded-md border border-border bg-surface text-foreground hover:bg-surface-secondary disabled:cursor-not-allowed disabled:opacity-40">
-                <svg aria-hidden="true" className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
-              </button>
-              <button type="button" onClick={() => setPage((current) => Math.min(pageCount, current + 1))} disabled={page === pageCount} aria-label="Next page" className="inline-flex size-9 items-center justify-center rounded-md border border-border bg-surface text-foreground hover:bg-surface-secondary disabled:cursor-not-allowed disabled:opacity-40">
-                <svg aria-hidden="true" className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
-              </button>
-            </div>
-          </footer>
+                  <DefaultInput label={"পিতার নাম"} placeholder={"পিতার নাম"} registerKey={"FatherName"} />
+                  <DefaultInput label={"মাতার নাম"} placeholder={"মাতার নাম"} registerKey={"MotherName"} />
+
+                  <DefaultSelect
+                    label={"Session"}
+                    options={sessionList ?? []}
+                    valueField="SessionID"
+                    nameField="SessionName"
+                    registerKey="SessionID"
+                  />
+
+                  <PhoneNumberInput
+                    label={
+                      <span className="text-red-500">Mobile 1* (SMS will be sent)</span>
+                    }
+                    registerKey="Mobile1"
+                    require={true}
+                    minLength={11}
+                    maxLength={11}
+                    allowedPrefixes={[
+                      '013',
+                      '014',
+                      '015',
+                      '016',
+                      '017',
+                      '018',
+                      '019',
+                    ]}
+                  />
+                  <PhoneNumberInput
+                    label="Mobile 2"
+                    registerKey="Mobile2"
+                    placeholder="ফোন নম্বর লিখুন"
+                    require={false}
+                  />
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full rounded-lg bg-clay px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+                  >
+                    {isLoading ? 'তৈরি হচ্ছে…' : 'শিক্ষাথী নিবন্ধন করুন'}
+                  </button>
+                </div>
+
+
+              </div>
+            </form>
+          </FormProvider>
+
         </div>
-        </section>
+      </section>
+
+
+
+
     </div>
-    );
+
+
+  );
 }

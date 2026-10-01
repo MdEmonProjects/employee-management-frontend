@@ -8,7 +8,11 @@ import Settings from './pages/Settings';
 import Departments from './pages/Departments';
 import UserEntry from './pages/UserEntry';
 import ClassList from './pages/ClassList';
-
+// npx prisma generate
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import UserList from './pages/UserList';
+import UserEdit from './pages/UserEdit';
 export default function App() {
   return (
     <BrowserRouter>
@@ -26,7 +30,9 @@ export default function App() {
           <Route path="dashboard" element={<EmptyPage />} />
 
           <Route path="academic">
-            <Route path="userlist" element={<UserEntry />} />
+            <Route path="userlist" element={<UserList />} />
+            <Route path="user_edit/:userId" element={<UserEdit />} />
+            <Route path="user_entry/:classid" element={<UserEntry />} />
             <Route path="classlist" element={<ClassList />} />
           </Route>
           
@@ -35,6 +41,18 @@ export default function App() {
         </Route>
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
+      <ToastContainer
+        position="top-center"
+        autoClose={1000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        draggable
+        theme="dark"
+        toastClassName="custom-toast"
+        progressClassName="custom-toast-progress"
+      />
     </BrowserRouter>
   );
 }

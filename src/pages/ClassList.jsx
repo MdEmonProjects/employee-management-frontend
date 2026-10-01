@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import SvgIcon from '../components/icons/SvgIcon';
 import SortableTable from '../components/SortableTable';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useGetClassListQuery } from '../features/class/classQuerySlice';
 import { showModal } from '../utils/ModalControlar';
 export default function ClassList() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-    const {
+  const {
     data: classList,
     isLoading: isClassLoading,
     isError: isClassError,
@@ -14,12 +15,12 @@ export default function ClassList() {
   const pageSize = 10;
 
 
-  useEffect(()=>{
+  useEffect(() => {
     console.log(classList);
-  },[classList])
+  }, [classList])
 
 
-  const openClassEntryModal = () =>{
+  const openClassEntryModal = () => {
     showModal("Add Class", "CLASS_ENTRY")
 
   }
@@ -44,7 +45,9 @@ export default function ClassList() {
       title: "অ্যাকশন",
       render: (row) => (
         <div className="space-x-2">
-          <button className="button--primary rounded-full bg-clay border-border px-5 py-2 text-[17px] font-medium text-white cursor-pointer" type="button" aria-label="নিবন্ধন">নিবন্ধন</button>
+          <NavLink to={`/dashboard/academic/user_entry/${row.ClassID}`} className="button--primary rounded-full bg-clay border-border px-5 py-2 text-[17px] font-medium text-white cursor-pointer">
+            নিবন্ধন
+          </NavLink>
         </div>
       ),
     },
@@ -90,7 +93,7 @@ export default function ClassList() {
               </svg>
               <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="ক্লাস গ্রুপের নাম অনুসন্ধান করুন" className="h-10 w-full rounded-md border border-border bg-surface px-3 pl-9 text-sm text-foreground outline-none focus:border-accent" />
             </label>
-     
+
           </div>
 
 
@@ -98,7 +101,7 @@ export default function ClassList() {
             classList && classList.length > 0 ? <SortableTable columns={columnsMadrasah} data={classList} isFilterColumn={false} /> : null
           }
 
-          
+
         </div>
       </section>
     </div>

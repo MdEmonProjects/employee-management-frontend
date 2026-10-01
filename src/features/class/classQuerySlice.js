@@ -2,7 +2,8 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 const API_URL = import.meta.env.VITE_SERVER_URL;
 
-export const classSlice = createApi({
+
+export const classQuerySlice = createApi({
   reducerPath: 'classs',
   baseQuery: fetchBaseQuery({
     baseUrl: `${API_URL}/api/academic`,
@@ -276,4 +277,4 @@ export const {
   useGetSingleSubClassQuery,
   useGetStudentCountInfoQuery,
   useGetExamClassSubjectsQuery
-} = classSlice;
+} = classQuerySlice;
