@@ -4,6 +4,7 @@ import SvgIcon from '../components/icons/SvgIcon';
 import { useGetClassListQuery } from '../features/class/classQuerySlice';
 import { useGetSessionsQuery } from '../features/session/sessionQuerySlice';
 import { useGetUserBySearchQuery } from '../features/user/userQuerySlice';
+import convertBijoyToBengali from '../utils/uniconveter';
 
 const pageSize = 10;
 const selectClassName = 'h-10 w-full rounded-md border border-border bg-surface px-3 text-sm text-foreground outline-none focus:border-accent';
@@ -63,8 +64,8 @@ export default function UserList() {
               <SvgIcon name="UserList" size={22} />
             </span>
             <div className="min-w-0">
-              <h1 className="truncate text-lg font-semibold text-foreground">User information</h1>
-              <p className="text-sm text-muted">{users.length} matching records</p>
+              <h1 className="truncate text-lg font-semibold text-foreground">ব্যবহারকারীর তথ্য</h1>
+              {/* <p className="text-sm text-muted">{users.length} টি তথ্য পাওয়া গেছে</p> */}
             </div>
           </div>
           <button
@@ -73,7 +74,7 @@ export default function UserList() {
             className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:bg-accent-hover"
           >
             <SvgIcon name="TbPlus" size={18} />
-            New registration
+            নতুন নিবন্ধন
           </button>
         </header>
 
@@ -88,23 +89,23 @@ export default function UserList() {
               <input
                 value={searchInput}
                 onChange={(event) => setSearchInput(event.target.value)}
-                placeholder="Search name, father, mother, mobile, or code"
+                placeholder="নাম, পিতা, মাতা, মোবাইল বা কোড দিয়ে অনুসন্ধান করুন"
                 className={`${selectClassName} pl-9`}
               />
             </label>
             <label>
-              <span className="sr-only">Filter by class</span>
+              <span className="sr-only">শ্রেণি নির্বাচন করুন</span>
               <select value={classId} onChange={(event) => setClassId(event.target.value)} className={selectClassName}>
-                <option value="">All classes</option>
+                <option value="">শ্রেণি নির্বাচন করুন</option>
                 {classList.map((item) => (
                   <option key={item.ClassID} value={item.ClassID}>{item.ClassName || item.EnglishClass || item.ClassID}</option>
                 ))}
               </select>
             </label>
             <label>
-              <span className="sr-only">Filter by session</span>
+              <span className="sr-only">শ্রেণি নির্বাচন করুন</span>
               <select value={sessionId} onChange={(event) => setSessionId(event.target.value)} className={selectClassName}>
-                <option value="">All sessions</option>
+                <option value="">শ্রেণি নির্বাচন করুন</option>
                 {sessionList.map((item) => (
                   <option key={item.SessionID} value={item.SessionID}>{item.SessionName || item.SessionEngName || item.SessionID}</option>
                 ))}
@@ -140,7 +141,7 @@ export default function UserList() {
                   <tr><td colSpan={9} className="px-3 py-10 text-center text-muted">No users match these filters.</td></tr>
                 ) : visibleUsers.map((user) => (
                   <tr key={user.UserID} className="border-t border-border text-foreground even:bg-table-stripe">
-                    <td className="whitespace-nowrap px-3 py-3">{user.UserCode ?? '—'}</td>
+                    <td className="whitespace-nowrap px-3 py-3">{user.UserCode ? convertBijoyToBengali(user.UserCode) : '—'}</td>
                     <td className="whitespace-nowrap px-3 py-3 font-medium">{user.UserName || '—'}</td>
                     <td className="whitespace-nowrap px-3 py-3">{user.FatherName || '—'}</td>
                     <td className="whitespace-nowrap px-3 py-3">{user.MotherName || '—'}</td>

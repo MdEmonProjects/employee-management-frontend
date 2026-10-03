@@ -25,8 +25,38 @@ export const menuData = [
         route: 'classlist',
         icon: '',
         subMenu: false,
+      },
+      {
+        id: '23',
+        name: 'শিক্ষাবর্ষ',
+        route: 'sessionlist',
+        icon: '',
+        subMenu: false,
       }
     ],
+  },
+  {
+    id: '4',
+    name: 'সময় সেটিংস',
+    route: 'timesetting',
+    icon: 'Dashboard',
+    subMenu: [
+      {
+        id: '41',
+        name: 'সিফটের তালিকা',
+        route: 'shiftlist',
+        icon: '',
+        subMenu: false,
+      },
+      {
+        id: '42',
+        name: 'সিফট সিডিউল',
+        route: 'shift_schedule',
+        icon: '',
+        subMenu: false,
+      }
+    ],
+
   },
   {
     id: '3',

@@ -21,15 +21,15 @@ export default function UserEntry() {
   const { classid } = useParams();
   const [createUser, { isLoading, error }] = useCreateUserMutation();
 
-  useEffect(()=>{
-    if(classid){
+  useEffect(() => {
+    if (classid) {
       setValue("ClassID", classid)
     }
   }, [classid])
 
   const onSubmit = async (data) => {
     console.log(data);
-    
+
     try {
       await createUser(data).unwrap();
       toast.success('Student created successfully!', {
@@ -145,10 +145,6 @@ export default function UserEntry() {
 
         </div>
       </section>
-
-
-
-
     </div>
 
 
