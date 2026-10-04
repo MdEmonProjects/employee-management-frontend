@@ -5,6 +5,10 @@ import { useRef } from 'react';
 import AddDepartment from '../views/AddDepartment';
 import ClickOutside from './ClickOutside';
 import AddClass from '../views/AddClass';
+import AddShift from '../views/AddShift';
+import UpdateShift from '../views/UpdateShift';
+import AddTimeCheck from '../views/AddTimeCheck';
+import UpdateTimeCheck from '../views/UpdateTimeCheck';
 
 const DefaultModal = () => {
   const { isOpen, title, modalType, id, meta } = useSelector((state) => state.modal);
@@ -17,17 +21,17 @@ const DefaultModal = () => {
     <div className="fixed inset-0 bg-[#0006] bg-opacity-50 flex justify-center items-center z-50 px-4">
       <ClickOutside
         className="max-w-full md:max-w-[520px] w-full overflow-hidden"
-          onClick={() => {
-            if (meta?.closeOnOutSide !== false) {
-              dispatch(closeModal());
-            }
-          }}
+        onClick={() => {
+          if (meta?.closeOnOutSide !== false) {
+            dispatch(closeModal());
+          }
+        }}
       >
         {/* Tailwind animation */}
         <div className={`w-full transform transition-all duration-300 ease-out ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}`}>
           <div className="bg-white rounded-lg shadow-lg relative w-full max-h-[90vh] overflow-y-auto" ref={scrollRef}>
             <div className="header pl-3 pr-2 pt-3 pb-2 border-0 border-slate-100 flex items-center justify-between">
-              {title && ( <h2 className="text-[18px] font-bold">{title}</h2>)}
+              {title && (<h2 className="text-[18px] font-bold">{title}</h2>)}
               <button onClick={() => dispatch(closeModal())} className="text-xl">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -51,6 +55,10 @@ const DefaultModal = () => {
               <div className="body p-3">
                 {modalType === 'ADD_DEPARTMENTS' && <AddDepartment userId={id} />}
                 {modalType === 'CLASS_ENTRY' && <AddClass />}
+                {modalType === 'SHIFT_ENTRY' && <AddShift />}
+                {modalType === 'SHIFT_EDIT' && <UpdateShift id={id} />}
+                {modalType === 'TIME_CHECK_ENTRY' && <AddTimeCheck />}
+                {modalType === 'TIME_CHECK_EDIT' && <UpdateTimeCheck id={id} />}
               </div>
             )}
           </div>

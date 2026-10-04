@@ -13,6 +13,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import UserList from './pages/UserList';
 import UserEdit from './pages/UserEdit';
+import TimeShiftList from './pages/TimeShiftList';
 export default function App() {
   return (
     <BrowserRouter>
@@ -35,7 +36,10 @@ export default function App() {
             <Route path="user_entry/:classid" element={<UserEntry />} />
             <Route path="classlist" element={<ClassList />} />
           </Route>
-          
+          <Route path="timesetting">
+            <Route path="shiftlist" element={<TimeShiftList />} />
+          </Route>
+
           <Route path="settings" element={<Settings />} />
           <Route path="departments" element={<Departments />} />
         </Route>
