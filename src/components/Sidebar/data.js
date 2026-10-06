@@ -50,8 +50,8 @@ export const menuData = [
       },
       {
         id: '42',
-        name: 'সিফট সিডিউল',
-        route: 'shift_schedule',
+        name: 'চেকইন & আউট তালিকা',
+        route: 'timechecklist',
         icon: '',
         subMenu: false,
       }

@@ -1,0 +1,193 @@
+import Flatpickr from "react-flatpickr";
+import { Controller, useFormContext } from "react-hook-form";
+import "flatpickr/dist/flatpickr.min.css";
+
+const DatePickerOne = ({
+  dateCalender,
+  placeholder,
+  registerKey,
+  require,
+  disable = false,
+  labelPosition = 'top',
+  defaultValue = null,
+  timestamp = false,
+  timeFormat = 'H:i',
+  useLocalTime = true
+}) => {
+  const {
+    control,
+    formState: { errors },
+  } = useFormContext();
+
+  const today = new Date();
+
+  // ✅ Convert UTC string to local Date object
+  const parseDateFromUTC = (dateValue) => {
+    if (!dateValue) return null;
+
+    if (typeof dateValue === 'string' && dateValue.includes('Z')) {
+      const date = new Date(dateValue);
+      const localDate = new Date(date.getTime() + (date.getTimezoneOffset() * 60000));
+      return localDate;
+    }
+
+    if (typeof dateValue === 'string') {
+      const parts = dateValue.split(/[- :]/);
+      if (timestamp && parts.length >= 5) {
+        return new Date(
+          parseInt(parts[0]),
+          parseInt(parts[1]) - 1,
+          parseInt(parts[2]),
+          parseInt(parts[3]),
+          parseInt(parts[4])
+        );
+      } else if (parts.length >= 3) {
+        return new Date(
+          parseInt(parts[0]),
+          parseInt(parts[1]) - 1,
+          parseInt(parts[2])
+        );
+      }
+    }
+
+    return dateValue instanceof Date ? dateValue : new Date(dateValue);
+  };
+
+  // ✅ Convert local Date to UTC string for backend
+  const formatToUTC = (date) => {
+    if (!date) return null;
+    if (!(date instanceof Date)) {
+      date = new Date(date);
+    }
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    if (timestamp) {
+      return new Date(Date.UTC(year, date.getMonth(), date.getDate(), date.getHours(), date.getMinutes())).toISOString();
+    } else {
+      return new Date(Date.UTC(year, date.getMonth(), date.getDate())).toISOString();
+    }
+  };
+
+  const initialDate = defaultValue ? parseDateFromUTC(defaultValue) : null;
+  const hasError = errors[registerKey];
+
+  return (
+    <div
+      className={`w-full ${labelPosition === 'left' ? 'flex items-center gap-4' : ''}`}
+    >
+      {dateCalender && (
+        <label
+          htmlFor={registerKey}
+          className={`text-black font-bold text-sm ${labelPosition === 'left'
+            ? 'w-1/4 min-w-[100px] mb-0 text-end'
+            : 'mb-1 block'
+            }`}
+        >
+          {dateCalender} :
+        </label>
+      )}
+
+      <div className={labelPosition === 'left' ? 'flex-1' : 'w-full'}>
+        <Controller
+          name={registerKey}
+          control={control}
+          defaultValue={initialDate}
+          rules={{
+            required: require ? 'এই ফিল্ডটি প্রয়োজনীয়' : false,
+          }}
+          render={({ field: { onChange, value } }) => (
+            <Flatpickr
+              disabled={disable}
+              value={value}
+              onChange={(dates) => {
+                const selectedDate = dates[0];
+                if (selectedDate) {
+                  if (timestamp) {
+                    const utcDate = new Date(Date.UTC(
+                      selectedDate.getFullYear(),
+                      selectedDate.getMonth(),
+                      selectedDate.getDate(),
+                      selectedDate.getHours(),
+                      selectedDate.getMinutes()
+                    ));
+                    onChange(utcDate);
+                  } else {
+                    const utcDate = new Date(Date.UTC(
+                      selectedDate.getFullYear(),
+                      selectedDate.getMonth(),
+                      selectedDate.getDate()
+                    ));
+                    onChange(utcDate);
+                  }
+                } else {
+                  onChange(null);
+                }
+              }}
+              placeholder={placeholder ?? today.toISOString().split('T')[0]}
+              options={{
+                enableTime: timestamp,
+                noCalendar: false,
+                time_24hr: timeFormat === 'H:i',
+                dateFormat: timestamp ? "Y-m-d H:i" : "Y-m-d",
+                timezone: useLocalTime ? 'local' : 'UTC',
+                formatDate: (date) => {
+                  if (timestamp) {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const hours = String(date.getHours()).padStart(2, '0');
+                    const minutes = String(date.getMinutes()).padStart(2, '0');
+                    return `${year}-${month}-${day} ${hours}:${minutes}`;
+                  }
+                  const year = date.getFullYear();
+                  const month = String(date.getMonth() + 1).padStart(2, '0');
+                  const day = String(date.getDate()).padStart(2, '0');
+                  return `${year}-${month}-${day}`;
+                },
+                parseDate: (dateStr) => {
+                  if (!dateStr) return null;
+                  const parts = dateStr.split(/[- :]/);
+                  if (timestamp && parts.length >= 5) {
+                    return new Date(
+                      parseInt(parts[0]),
+                      parseInt(parts[1]) - 1,
+                      parseInt(parts[2]),
+                      parseInt(parts[3]),
+                      parseInt(parts[4])
+                    );
+                  } else if (parts.length >= 3) {
+                    return new Date(
+                      parseInt(parts[0]),
+                      parseInt(parts[1]) - 1,
+                      parseInt(parts[2])
+                    );
+                  }
+                  return null;
+                }
+              }}
+              className={`w-full font-default rounded-lg border text-sm h-11 px-3 outline-none transition-all duration-200 ease-in-out bg-white text-gray-900
+                ${hasError
+                  ? 'border-red-500 placeholder:text-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-200'
+                  : 'border-gray-300 placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 hover:border-gray-400'
+                }
+                disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-gray-500
+              `}
+            />
+          )}
+        />
+
+        {hasError && (
+          <p className="text-red-500 text-xs font-medium mt-1.5 font-default animate-fade-in">
+            {errors[registerKey].message}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default DatePickerOne;

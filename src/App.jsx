@@ -14,6 +14,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import UserList from './pages/UserList';
 import UserEdit from './pages/UserEdit';
 import TimeShiftList from './pages/TimeShiftList';
+import TimeCheckList from './pages/TimeCheckList';
+import TimeSetting from './pages/TimeSettings';
 export default function App() {
   return (
     <BrowserRouter>
@@ -38,6 +40,8 @@ export default function App() {
           </Route>
           <Route path="timesetting">
             <Route path="shiftlist" element={<TimeShiftList />} />
+            <Route path="timechecklist" element={<TimeCheckList />} />
+            <Route path="timesettings" element={<TimeSetting />} />
           </Route>
 
           <Route path="settings" element={<Settings />} />

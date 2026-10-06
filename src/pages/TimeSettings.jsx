@@ -1,411 +1,547 @@
 import React, { useMemo, useState } from "react";
+import DefaultSelect from "../components/DefaultSelect";
+import DefaultInput from "../components/DefaultInput";
+import { useGetShiftListQuery, useGetTimeCheckListQuery } from "../features/shift/shiftQuerySlice";
+import { FormProvider, useForm } from "react-hook-form";
+import { useGetSessionsQuery } from "../features/session/sessionQuerySlice";
+import TimePicker from "../components/TimePicker";
+import DatePickerOne from "../components/DatePickerOne";
 
 /* ------------------------------------------------------------------ *
- * TimeSetting.jsx  –  Attendance machine time setting (Tailwind only)
- * Tab 1: Switch rules (Check-In / Check-Out / Break-In / Break-Out)
- * Tab 2: Assign users to a shift
- * Replace the SAMPLE_* data and the TODO API calls with your backend.
+ * TimeSetting.jsx – "Switchin Setting" MAIN AREA
  * ------------------------------------------------------------------ */
 
-// Badge colour per switch type (full class names so Tailwind can see them)
-const SWITCH_STYLE = {
-  "Check-In": "bg-emerald-600",
-  "Check-Out": "bg-rose-600",
-  "Break-In": "bg-amber-600",
-  "Break-Out": "bg-sky-600",
-};
-const SWITCHES = Object.keys(SWITCH_STYLE);
 const SHIFTS = ["প্রথম শিফট", "দ্বিতীয় শিফট"];
-
-// ---- sample data (same rows as your old screen) ----
-const SAMPLE_RULES = [
-  { id: 1, shift: SHIFTS[0], sw: "Check-In", start: "07:00:00", late: "19:00:00", end: "19:00:01" },
-  { id: 4, shift: SHIFTS[0], sw: "Check-Out", start: "19:00:02", late: "20:00:00", end: "20:00:00" },
-  { id: 5, shift: SHIFTS[1], sw: "Check-In", start: "11:00:00", late: "12:00:00", end: "12:20:00" },
-  { id: 6, shift: SHIFTS[1], sw: "Check-Out", start: "13:00:00", late: "15:00:00", end: "15:00:00" },
-  { id: 7, shift: SHIFTS[0], sw: "Break-In", start: "16:00:00", late: "16:30:00", end: "17:00:00" },
-  { id: 8, shift: SHIFTS[0], sw: "Break-Out", start: "18:00:00", late: "18:30:00", end: "19:00:00" },
+const SESSIONS = [
+  { id: "Regular Session", name: "Regular Session" },
+  { id: "Ramadan Session", name: "Ramadan Session" },
 ];
-const SAMPLE_USERS = [
-  { key: 1, code: 1001, name: "আব্দুল রহমান", father: "ঈ:টংবৎ", shift: "দ্বিতীয় শিফট", schedule: "বিরতি-প্রস্থান", type: "শিক্ষক" },
-  { key: 2, code: 1102, name: "মোহাম্মদ নিয়ামুল হক", father: "ঈ:টংবৎ", shift: "দ্বিতীয় শিফট", schedule: "বিরতি-আগমন", type: "শিক্ষক" },
-  { key: 3, code: 1102, name: "মোহাম্মদ নিয়ামুল হক", father: "ঈ:টংবৎ", shift: "প্রথম শিফট", schedule: "আগমন", type: "শিক্ষক" },
-  { key: 4, code: 1102, name: "মোহাম্মদ নিয়ামুল হক", father: "ঈ:টংবৎ", shift: "প্রথম শিফট", schedule: "প্রস্থান", type: "শিক্ষক" },
-  // shift: "" means the user is NOT assigned to any shift yet
-  { key: 5, code: 1203, name: "আবু বকর সিদ্দিক", father: "ঈ:টংবৎ", shift: "", schedule: "", type: "কর্মচারী" },
-  { key: 6, code: 1204, name: "ফাতেমা খাতুন", father: "ঈ:টংবৎ", shift: "", schedule: "", type: "শিক্ষক" },
+const SWITCHES = [
+  { id: "Check-In", name: "Check-In" },
+  { id: "Check-Out", name: "Check-Out" },
+  { id: "Break-In", name: "Break-In" },
+  { id: "Break-Out", name: "Break-Out" },
 ];
-const UNASSIGNED = "__none__"; // filter / target value for "no shift"
 
-// "HH:MM:SS" -> % of the day (used for the timeline bar)
-const toPct = (t) => {
-  const [h, m, s] = t.split(":").map(Number);
-  return ((h * 3600 + m * 60 + (s || 0)) / 86400) * 100;
+const ROW_TINT = {
+  "Check-In": "bg-emerald-50 dark:bg-emerald-950/30",
+  "Check-Out": "bg-violet-50 dark:bg-violet-950/30",
+  "Break-In": "bg-amber-50 dark:bg-amber-950/30",
+  "Break-Out": "bg-sky-50 dark:bg-sky-950/30",
 };
-// <input type="time" step="1"> may return HH:MM, always store HH:MM:SS
-const withSeconds = (t) => (t && t.length === 5 ? `${t}:00` : t);
 
-// ---- shared Tailwind class strings ----
-const inputCls =
-  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/30 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100";
-const labelCls = "mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400";
-const btnPrimary =
-  "rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-40";
-const btnGhost =
-  "rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700";
-const cardCls =
-  "rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900";
+const SAMPLE_RULES = [
+  { id: 1, shift: SHIFTS[0], sw: "Check-In", start: "07:00:00", late: "19:00:00", end: "19:00:01", active: true },
+  { id: 4, shift: SHIFTS[0], sw: "Check-Out", start: "19:00:02", late: "20:00:00", end: "20:00:00", active: true },
+  { id: 7, shift: SHIFTS[0], sw: "Break-In", start: "16:00:00", late: "16:30:00", end: "17:00:00", active: true },
+  { id: 8, shift: SHIFTS[0], sw: "Break-Out", start: "18:00:00", late: "18:30:00", end: "19:00:00", active: true },
+  { id: 5, shift: SHIFTS[1], sw: "Check-In", start: "11:00:00", late: "12:00:00", end: "12:20:00", active: true },
+  { id: 6, shift: SHIFTS[1], sw: "Check-Out", start: "13:00:00", late: "15:00:00", end: "15:00:00", active: true },
+];
+
+const SAMPLE_EMPLOYEES = [
+  { id: "250012", name: "মোঃ আব্দুল্লাহ আল মামুন", dept: "হিসাব", desig: "সুপারভাইজার", shift: "" },
+  { id: "250015", name: "সানিয়া ইসলাম", dept: "মানব সম্পদ", desig: "কর্মচারী", shift: "" },
+  { id: "250017", name: "রাশেদুল ইসলাম", dept: "হিসাব", desig: "অফিস সহকারী", shift: "" },
+  { id: "250025", name: "তানভীর আহমেদ", dept: "মানব সম্পদ", desig: "অফিস সহায়ক", shift: SHIFTS[1] },
+  { id: "250028", name: "সাইফ উদ্দিন", dept: "সেলস", desig: "টিম লিড", shift: SHIFTS[1] },
+  { id: "250035", name: "মুসারাত জাহান", dept: "মানব সম্পদ", desig: "অফিস সহকারী", shift: SHIFTS[1] },
+  { id: "250101", name: "নুরুল ইসলাম", dept: "আইটি", desig: "সহকারী প্রোগ্রামার", shift: SHIFTS[0] },
+  { id: "250102", name: "রাকিব হাসান", dept: "হিসাব", desig: "কর্মচারী", shift: SHIFTS[0] },
+  { id: "250103", name: "ফারহানা আক্তার", dept: "মানব সম্পদ", desig: "সিনিয়র অফিসার", shift: SHIFTS[0] },
+  { id: "250104", name: "শামীমা রহমান", dept: "সেলস", desig: "কর্মচারী", shift: SHIFTS[0] },
+  { id: "250105", name: "জাহিদুল ইসলাম", dept: "অপারেশন", desig: "টিম লিড", shift: SHIFTS[0] },
+  { id: "250106", name: "রেহানা বেগম", dept: "হিসাব", desig: "অফিস সহকারী", shift: SHIFTS[0] },
+];
+
+const toSec = (t) => { const [h, m, s] = t.split(":").map(Number); return h * 3600 + m * 60 + (s || 0); };
+const withSeconds = (t) => (t && t.length === 5 ? t + ":00" : t);
+
+const card = "rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900";
+const input = "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/25 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100";
+const btnBlue = "inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40";
+const btnLine = "inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700";
+const th = "whitespace-nowrap px-3 py-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-400";
+const td = "whitespace-nowrap px-3 py-2";
 
 export default function TimeSetting() {
-  const [tab, setTab] = useState("rules");
+  const [rules, setRules] = useState(SAMPLE_RULES);
+  const [employees, setEmployees] = useState(SAMPLE_EMPLOYEES);
+  const [activeShift, setActiveShift] = useState(SHIFTS[0]);
+  const [autoOn, setAutoOn] = useState(true);
+  const [editId, setEditId] = useState(null);
   const [toast, setToast] = useState("");
 
-  const notify = (msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(""), 1800);
+  // ---- React Hook Form – Auto Switch Setting ----
+  const switchMethods = useForm({
+    defaultValues: {
+      shiftId: "",
+      switchType: "",
+      sessionName: "",
+      dateFrom: "",
+      dateTo: "",
+      startTime: "",
+      lateTime: "",
+      endTime: "",
+    },
+  });
+  const { handleSubmit: handleSwitchSubmit, reset: resetSwitch, setValue: setSwitchValue } = switchMethods;
+
+  const { data: shiftList } = useGetShiftListQuery();
+  const {
+    data: timeCheckList,
+    isLoading,
+    isError,
+  } = useGetTimeCheckListQuery();
+
+  const {
+    data: sessionList,
+    isLoading: isSessionLoading,
+    isError: isSessionError,
+  } = useGetSessionsQuery();
+
+  const shiftOptions = shiftList ?? [];
+  const timeCheckOptions = timeCheckList ?? [];
+
+  const notify = (m) => { setToast(m); setTimeout(() => setToast(""), 1800); };
+
+  const onReset = () => { setEditId(null); resetSwitch(); };
+
+  const onEdit = (r) => {
+    setEditId(r.id);
+    setSwitchValue("shiftId", r.shift);
+    setSwitchValue("switchType", r.sw);
+    setSwitchValue("startTime", r.start);
+    setSwitchValue("lateTime", r.late);
+    setSwitchValue("endTime", r.end);
   };
 
-  return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      {/* Header */}
-      <header className="flex flex-wrap items-center justify-between gap-2 bg-teal-800 px-5 py-3 text-white">
-        <h1 className="text-lg font-semibold">
-          Attendance Time Setting
-          <span className="ml-2 text-sm font-normal text-teal-100">হাজিরা সময় নির্ধারণ</span>
-        </h1>
-        {/* TODO: call your refresh API here */}
-        <button
-          onClick={() => notify("Data refreshed")}
-          className="rounded-lg border border-white/40 px-3 py-1.5 text-sm hover:bg-white/10"
-        >
-          Refresh data
-        </button>
-      </header>
+  const onDelete = (id) => {
+    // TODO: DELETE /api/switch-rules/:id
+    if (window.confirm("Delete rule #" + id + "?")) setRules(rules.filter((r) => r.id !== id));
+  };
 
-      {/* Tabs */}
-      <div className="flex gap-1 px-5 pt-3">
-        {[
-          ["rules", "Switch rules · সময়সূচি"],
-          ["assign", "Assign users · ব্যবহারকারী"],
-        ].map(([id, label]) => (
-          <button
-            key={id}
-            onClick={() => setTab(id)}
-            className={`rounded-t-lg border-b-2 px-4 py-2 text-sm font-medium ${
-              tab === id
-                ? "border-teal-700 bg-white text-teal-700 dark:bg-slate-900 dark:text-teal-400"
-                : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
+  const onSave = (data) => {
+    if (!data.startTime || !data.lateTime || !data.endTime) return notify("সব সময় পূরণ করুন");
+    const ruleData = {
+      shift: data.shiftId,
+      sw: data.switchType,
+      start: withSeconds(data.startTime),
+      late: withSeconds(data.lateTime),
+      end: withSeconds(data.endTime),
+    };
+    // TODO: POST / PUT /api/switch-rules (also send data.dateFrom, data.dateTo, data.sessionName)
+    if (editId) {
+      setRules(rules.map((r) => (r.id === editId ? { ...r, ...ruleData } : r)));
+    } else {
+      setRules([...rules, { id: Math.max(0, ...rules.map((r) => r.id)) + 1, active: true, ...ruleData }]);
+    }
+    onReset();
+    notify("সংরক্ষণ হয়েছে");
+  };
+
+  const toggleActive = (id) => setRules(rules.map((r) => (r.id === id ? { ...r, active: !r.active } : r)));
+
+  // ---- Transfer list state ----
+  const [pickL, setPickL] = useState(new Set());
+  const [pickR, setPickR] = useState(new Set());
+  const [qL, setQL] = useState("");
+  const [qR, setQR] = useState("");
+  const [deptL, setDeptL] = useState("");
+  const [deptR, setDeptR] = useState("");
+  const [onlyFree, setOnlyFree] = useState(false);
+
+  const depts = useMemo(() => [...new Set(employees.map((e) => e.dept))], [employees]);
+  const match = (e, q, dept) =>
+    (!dept || e.dept === dept) && (!q || (e.id + e.name + e.dept).toLowerCase().includes(q.trim().toLowerCase()));
+
+  const left = employees.filter((e) => e.shift !== activeShift && (!onlyFree || !e.shift) && match(e, qL, deptL));
+  const right = employees.filter((e) => e.shift === activeShift && match(e, qR, deptR));
+  const freeCount = employees.filter((e) => !e.shift).length;
+
+  const moveTo = (ids, shift) => {
+    // TODO: POST /api/user-shift
+    setEmployees(employees.map((e) => (ids.has(e.id) ? { ...e, shift } : e)));
+    setPickL(new Set());
+    setPickR(new Set());
+  };
+  const idsOf = (rows) => new Set(rows.map((e) => e.id));
+
+  // ---- Summary bar values ----
+  const sr = rules.filter((r) => r.shift === activeShift);
+  const sStart = sr.length ? sr.reduce((a, r) => (toSec(r.start) < toSec(a.start) ? r : a)).start : "—";
+  const sEnd = sr.length ? sr.reduce((a, r) => (toSec(r.end) > toSec(a.end) ? r : a)).end : "—";
+  const hours = sr.length ? Math.round((toSec(sEnd) - toSec(sStart)) / 3600) : null;
+
+  return (
+    <div className="min-h-screen space-y-4 bg-slate-100 p-4 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+
+      {/* Page title */}
+      <div className="flex items-center gap-3">
+        <div className="grid h-12 w-12 place-items-center rounded-xl bg-clay text-xl text-white">⚙</div>
+        <div>
+          <h1 className="text-xl font-semibold">Switchin Setting</h1>
+          <p className="text-[16px] lg:text-[18px] text-slate-500 dark:text-slate-400">
+            শিফটের সময়সূচি, সেশন এবং অটো সুইচ সেটিংস এখানে পরিচালনা করুন।
+          </p>
+        </div>
       </div>
 
-      <main className="px-5 pb-6">
-        <div className="rounded-b-xl rounded-tr-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-          {tab === "rules" ? <RulesTab notify={notify} /> : <AssignTab notify={notify} />}
-        </div>
-      </main>
+      {/* Row 1 */}
+      <div className="grid gap-4 xl:grid-cols-[5fr_6fr]">
 
-      {/* Toast */}
-      {toast && (
-        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-teal-700 px-5 py-2 text-sm text-white shadow-lg">
-          {toast}
+        {/* --- Form 1: Auto Switch Setting --- */}
+        <FormProvider {...switchMethods}>
+          <form onSubmit={handleSwitchSubmit(onSave)} className="space-y-4">
+            <section className={card}>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="font-semibold text-[16px]">
+                  ⚙ অটো সুইচ সেটিং{" "}
+                  {editId && <span className="text-sm font-normal text-slate-500">(সম্পাদনা #{editId})</span>}
+                </h2>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                {/* শিফটের নাম */}
+                <div>
+                  <DefaultSelect
+                    label="শিফটের নাম"
+                    require="শিফটের নাম নির্বাচন করুন"
+                    registerKey="shiftId"
+                    options={shiftOptions}
+                    valueField="ID"
+                    nameField="ShiftNameBangla"
+                    defaultValue="শিফট নির্বাচন করুন"
+                  />
+                </div>
+
+                {/* সুইচের ধরন */}
+                <div>
+                  <DefaultSelect
+                    label="সুইচের ধরন"
+                    require="সুইচের ধরন নির্বাচন করুন"
+                    registerKey="switchType"
+                    options={timeCheckOptions}
+                    valueField="ID"
+                    nameField="TypeNameBangla"
+                    defaultValue="ধরন নির্বাচন করুন"
+                  />
+                </div>
+
+                {/* সেশন নাম */}
+                <div>
+                  <DefaultSelect
+                    label="সেশন নাম"
+                    require="সেশন নির্বাচন করুন"
+                    registerKey="SessionID"
+                    options={sessionList ?? []}
+                    valueField="SessionID"
+                    nameField="SessionName"
+                    defaultValue="সেশন নির্বাচন করুন"
+                  />
+                </div>
+
+                {/* শিফট শুরু তারিখ */}
+                <div>
+                  <label
+                    htmlFor={"dateFrom"}
+                    className={`font-bold text-sm`}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>শিফট শুরু তারিখ</span>
+                      <span className="text-red-500">*</span>
+                      <span>:</span>
+                    </div>
+                  </label>
+                  <DatePickerOne require={false} registerKey={`dateFrom`} placeholder={"Date"} timestamp={false} />
+
+                  {/* <DefaultInput
+                    label="শিফট শুরু তারিখ"
+                    type="date"
+                    registerKey="dateFrom"
+                    placeholder=""
+                  /> */}
+                </div>
+
+                {/* শিফট শেষ তারিখ */}
+                <div>
+
+                  <DefaultInput
+                    label="শিফট শেষ তারিখ"
+                    type="date"
+                    registerKey="dateTo"
+                    placeholder=""
+                  />
+                </div>
+
+                {/* শুরুর সময় */}
+                <div>
+                  <TimePicker
+                    timeCalender={"শুরুর সময়"}
+                    placeholder={`শুরুর সময়`}
+                    registerKey={`startTime`}
+                    require={"শুরুর সময়"}
+
+                  />
+                  {/* <DefaultInput
+                    label="শুরুর সময়"
+                    type="time"
+                    registerKey="startTime"
+                    require={true}
+                    placeholder=""
+                  /> */}
+                </div>
+
+                {/* লেট শুরু */}
+                <div>
+                  <DefaultInput
+                    label="লেট শুরু"
+                    type="time"
+                    registerKey="lateTime"
+                    require={true}
+                    placeholder=""
+                  />
+                </div>
+
+                {/* শেষ সময় */}
+                <div>
+                  <DefaultInput
+                    label="শেষ সময়"
+                    type="time"
+                    registerKey="endTime"
+                    require={true}
+                    placeholder=""
+                  />
+                </div>
+              </div>
+
+              <div className="mt-5 flex justify-end gap-3">
+                <button type="button" className={btnLine} onClick={onReset}>↻ রিসেট</button>
+                <button type="submit" className={btnBlue}>💾 সংরক্ষণ করুন</button>
+              </div>
+            </section>
+          </form>
+        </FormProvider>
+
+        {/* Shift list – grouped by shift */}
+        <section className={card}>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-semibold">📅 শিফট তালিকা</h2>
+            <button className={btnBlue} onClick={onReset}>＋ নতুন শিফট যোগ করুন</button>
+          </div>
+          <div className="overflow-x-auto rounded-lg bg-slate-50 dark:bg-slate-800/50">
+            <table className="w-full text-sm">
+              <thead>
+                <tr>
+                  {["ক্রমিক", "সুইচ", "শুরু সময়", "লেট", "শেষ সময়", "স্ট্যাটাস", "অ্যাকশন"].map((h) => (
+                    <th key={h} className={th}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {SHIFTS.map((shift) => {
+                  const rows = rules.filter((r) => r.shift === shift);
+                  return (
+                    <React.Fragment key={shift}>
+                      <tr>
+                        <td colSpan={7} className="px-2 pt-3">
+                          <button
+                            onClick={() => setActiveShift(shift)}
+                            className={"flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-left text-sm font-semibold " +
+                              (activeShift === shift
+                                ? "bg-blue-600 text-white"
+                                : "bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200")}
+                          >
+                            <span>{shift}</span>
+                            <span className="text-xs font-normal opacity-80">{rows.length} টি সুইচ</span>
+                          </button>
+                        </td>
+                      </tr>
+                      {rows.map((r) => (
+                        <tr key={r.id} className={"border-b border-white dark:border-slate-900 " + ROW_TINT[r.sw]}>
+                          <td className={td}>
+                            <span className="grid h-6 w-6 place-items-center rounded-full bg-white/80 text-xs font-medium dark:bg-slate-700">{r.id}</span>
+                          </td>
+                          <td className={td + " font-medium"}>{r.sw}</td>
+                          <td className={td + " tabular-nums"}>{r.start}</td>
+                          <td className={td + " tabular-nums"}>{r.late}</td>
+                          <td className={td + " tabular-nums"}>{r.end}</td>
+                          <td className={td}>
+                            <button
+                              onClick={() => toggleActive(r.id)}
+                              className={"rounded-full px-3 py-0.5 text-xs font-medium " +
+                                (r.active
+                                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"
+                                  : "bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300")}
+                            >
+                              {r.active ? "চালু" : "বন্ধ"}
+                            </button>
+                          </td>
+                          <td className={td}>
+                            <button title="Edit" onClick={() => onEdit(r)} className="rounded px-2 py-1 text-blue-600 hover:bg-white dark:hover:bg-slate-700">✎</button>
+                            <button title="Delete" onClick={() => onDelete(r.id)} className="rounded px-2 py-1 text-red-500 hover:bg-white dark:hover:bg-slate-700">🗑</button>
+                          </td>
+                        </tr>
+                      ))}
+                      {rows.length === 0 && (
+                        <tr><td colSpan={7} className="px-3 py-3 text-center text-slate-500">এই শিফটে কোনো সুইচ নেই।</td></tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      {/* Row 2: Employee transfer list */}
+      <section className={card}>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-semibold">👥 কর্মচারী নির্বাচন করুন</h2>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-slate-500">শিফট:</span>
+            <select
+              className={input + " !w-auto"}
+              value={activeShift}
+              onChange={(e) => { setActiveShift(e.target.value); setPickL(new Set()); setPickR(new Set()); }}
+            >
+              {SHIFTS.map((s) => <option key={s}>{s}</option>)}
+            </select>
+          </div>
         </div>
+        <div className="grid gap-4 lg:grid-cols-[1fr_auto_1fr]">
+          <Panel
+            title="উপলব্ধ কর্মচারী" note="(শিফটে যোগ করার জন্য)"
+            rows={left} picked={pickL} setPicked={setPickL}
+            q={qL} setQ={setQL} dept={deptL} setDept={setDeptL}
+            depts={depts} showShift total={left.length}
+            extra={
+              <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+                <input type="checkbox" checked={onlyFree} onChange={(e) => setOnlyFree(e.target.checked)} />
+                শুধু অ্যাসাইন হয়নি ({freeCount})
+              </label>
+            }
+          />
+          <div className="flex flex-row justify-center gap-2 lg:flex-col lg:justify-center">
+            <MoveBtn label="নির্বাচিত যোগ করুন" icon="→" disabled={!pickL.size} onClick={() => moveTo(pickL, activeShift)} />
+            <MoveBtn label="সব যোগ করুন" icon="⇒" disabled={!left.length} onClick={() => moveTo(idsOf(left), activeShift)} />
+            <MoveBtn label="নির্বাচিত অপসারণ" icon="←" disabled={!pickR.size} onClick={() => moveTo(pickR, "")} />
+            <MoveBtn label="সব অপসারণ" icon="⇐" disabled={!right.length} onClick={() => moveTo(idsOf(right), "")} />
+          </div>
+          <Panel
+            title="নির্বাচিত কর্মচারী" note={"(" + activeShift + " থাকবেন)"}
+            rows={right} picked={pickR} setPicked={setPickR}
+            q={qR} setQ={setQR} dept={deptR} setDept={setDeptR}
+            depts={depts} total={right.length}
+          />
+        </div>
+      </section>
+
+      {/* Row 3: Summary bar */}
+      <section className={card}>
+        <h2 className="mb-3 text-sm font-semibold">🗓 সেশন সংক্ষিপ্ত বিবরণ</h2>
+        <div className="flex flex-wrap items-stretch gap-3">
+          <Stat label="বর্তমান শিফট">
+            <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-sm font-medium text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">{activeShift}</span>
+          </Stat>
+          <Stat label="শুরু সময়">{sStart}</Stat>
+          <Stat label="শেষ সময়">{sEnd}</Stat>
+          <Stat label="মোট সময়">{hours === null ? "—" : hours + " ঘন্টা"}</Stat>
+          <Stat label="বর্তমান অবস্থা">
+            <span className={autoOn ? "text-emerald-600" : "text-slate-500"}>● {autoOn ? "চালু" : "বন্ধ"}</span>
+          </Stat>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <button className={btnBlue} onClick={() => { setAutoOn(!autoOn); notify(autoOn ? "অটো সুইচ বন্ধ" : "অটো সুইচ চালু"); }}>↻ অটো সুইচ</button>
+            <button className={btnLine} onClick={() => sr[0] && onEdit(sr[0])}>✎ সম্পাদনা</button>
+            <button className={btnLine} onClick={() => window.print()}>🖨 প্রিন্ট</button>
+          </div>
+        </div>
+      </section>
+
+      {toast && (
+        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-blue-600 px-5 py-2 text-sm text-white shadow-lg">{toast}</div>
       )}
     </div>
   );
 }
 
-/* ====================== TAB 1 : SWITCH RULES ====================== */
-function RulesTab({ notify }) {
-  const [rules, setRules] = useState(SAMPLE_RULES);
-  const [editId, setEditId] = useState(null);
-  const empty = { shift: SHIFTS[0], sw: "Check-In", start: "", late: "", end: "" };
-  const [form, setForm] = useState(empty);
-  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
-
-  const onNew = () => {
-    setEditId(null);
-    setForm(empty);
-  };
-  const onEdit = (r) => {
-    setEditId(r.id);
-    setForm({ shift: r.shift, sw: r.sw, start: r.start, late: r.late, end: r.end });
-  };
-  const onDelete = (id) => {
-    // TODO: DELETE /api/switch-rules/:id
-    if (window.confirm(`Delete rule #${id}?`)) setRules(rules.filter((r) => r.id !== id));
-  };
-  const onSave = () => {
-    if (!form.start || !form.late || !form.end) return notify("Fill all three times");
-    const data = {
-      shift: form.shift,
-      sw: form.sw,
-      start: withSeconds(form.start),
-      late: withSeconds(form.late),
-      end: withSeconds(form.end),
-    };
-    // TODO: POST / PUT /api/switch-rules
-    if (editId) setRules(rules.map((r) => (r.id === editId ? { ...r, ...data } : r)));
-    else setRules([...rules, { id: Math.max(0, ...rules.map((r) => r.id)) + 1, ...data }]);
-    onNew();
-    notify("Saved");
-  };
-
+/* ---------- small pieces ---------- */
+function Stat({ label, children }) {
   return (
-    <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-      {/* Form */}
-      <div className={cardCls}>
-        <h2 className="mb-3 text-sm font-semibold">{editId ? `Edit rule #${editId}` : "New rule"}</h2>
-        <div className="space-y-3">
-          <div>
-            <label className={labelCls}>Shift name</label>
-            <select className={inputCls} value={form.shift} onChange={set("shift")}>
-              {SHIFTS.map((s) => <option key={s}>{s}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className={labelCls}>Switch name</label>
-            <select className={inputCls} value={form.sw} onChange={set("sw")}>
-              {SWITCHES.map((s) => <option key={s}>{s}</option>)}
-            </select>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelCls}>Start time</label>
-              <input type="time" step="1" className={inputCls} value={form.start} onChange={set("start")} />
-            </div>
-            <div>
-              <label className={labelCls}>Start late</label>
-              <input type="time" step="1" className={inputCls} value={form.late} onChange={set("late")} />
-            </div>
-          </div>
-          <div>
-            <label className={labelCls}>End time</label>
-            <input type="time" step="1" className={inputCls} value={form.end} onChange={set("end")} />
-          </div>
-        </div>
-        <div className="mt-4 flex gap-2">
-          <button className={btnPrimary} onClick={onSave}>Save</button>
-          <button className={btnGhost} onClick={onNew}>New</button>
-        </div>
-      </div>
-
-      {/* One card per shift: its own timeline + table */}
-      <div className="space-y-4">
-        {SHIFTS.map((shift) => {
-          const shiftRules = rules.filter((r) => r.shift === shift);
-          return (
-            <div key={shift} className={cardCls}>
-              <h2 className="mb-3 text-sm font-semibold">
-                {shift} <span className="font-normal text-slate-500">({shiftRules.length})</span>
-              </h2>
-
-              {/* 24h timeline. left/width are dynamic, so these two use inline style */}
-              <div className="relative h-6 overflow-hidden rounded-lg bg-slate-200 dark:bg-slate-700">
-                {shiftRules.map((r) => {
-                  const a = toPct(r.start);
-                  const b = Math.max(toPct(r.end), a + 0.4);
-                  return (
-                    <div
-                      key={r.id}
-                      title={`${r.sw} ${r.start} – ${r.end}`}
-                      className={`absolute inset-y-0 opacity-80 ${SWITCH_STYLE[r.sw]}`}
-                      style={{ left: `${a}%`, width: `${b - a}%` }}
-                    />
-                  );
-                })}
-              </div>
-              <div className="mt-1 flex justify-between text-[11px] text-slate-500">
-                <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span>
-              </div>
-
-              <div className="mt-3 overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-200 text-left text-xs text-slate-500 dark:border-slate-700">
-                      {["ID", "Switch", "Start", "Late", "End", ""].map((h) => (
-                        <th key={h} className="whitespace-nowrap px-2 py-2 font-medium">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {shiftRules.map((r) => (
-                      <tr key={r.id} className="border-b border-slate-100 hover:bg-teal-50 dark:border-slate-800 dark:hover:bg-slate-800">
-                        <td className="px-2 py-2">{r.id}</td>
-                        <td className="px-2 py-2">
-                          <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium text-white ${SWITCH_STYLE[r.sw]}`}>{r.sw}</span>
-                        </td>
-                        <td className="px-2 py-2 tabular-nums">{r.start}</td>
-                        <td className="px-2 py-2 tabular-nums">{r.late}</td>
-                        <td className="px-2 py-2 tabular-nums">{r.end}</td>
-                        <td className="whitespace-nowrap px-2 py-2 text-right">
-                          <button title="Edit" onClick={() => onEdit(r)} className="rounded px-2 py-1 hover:bg-slate-200 dark:hover:bg-slate-700">✎</button>
-                          <button title="Delete" onClick={() => onDelete(r.id)} className="rounded px-2 py-1 hover:bg-slate-200 dark:hover:bg-slate-700">🗑</button>
-                        </td>
-                      </tr>
-                    ))}
-                    {shiftRules.length === 0 && (
-                      <tr><td colSpan={6} className="px-2 py-4 text-center text-slate-500">No rules for this shift yet.</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+    <div className="min-w-[120px] rounded-lg border border-slate-200 px-4 py-2 dark:border-slate-700">
+      <div className="text-xs text-slate-500">{label}</div>
+      <div className="mt-0.5 text-sm font-medium">{children}</div>
     </div>
   );
 }
 
-/* ====================== TAB 2 : ASSIGN USERS ====================== */
-function AssignTab({ notify }) {
-  const [users, setUsers] = useState(SAMPLE_USERS);
-  const [picked, setPicked] = useState(new Set()); // set of user.key
-  const [q, setQ] = useState("");
-  const [fType, setFType] = useState("");
-  const [fShift, setFShift] = useState("");
-  const [target, setTarget] = useState(SHIFTS[0]);
-
-  // apply the filters
-  const list = useMemo(
-    () =>
-      users.filter(
-        (u) =>
-          (!fType || u.type === fType) &&
-          (!fShift || (fShift === UNASSIGNED ? !u.shift : u.shift === fShift)) &&
-          (!q || `${u.code}${u.name}`.toLowerCase().includes(q.trim().toLowerCase()))
-      ),
-    [users, q, fType, fShift]
+function MoveBtn({ label, icon, disabled, onClick }) {
+  return (
+    <button
+      disabled={disabled}
+      onClick={onClick}
+      className="flex w-28 flex-col items-center rounded-lg border border-slate-300 bg-white px-2 py-2 text-xs font-medium text-blue-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-600 dark:bg-slate-800 dark:text-blue-300 dark:hover:bg-slate-700"
+    >
+      <span className="text-lg leading-none">{icon}</span>
+      {label}
+    </button>
   );
+}
 
-  const toggle = (key) => {
-    const next = new Set(picked);
-    next.has(key) ? next.delete(key) : next.add(key);
-    setPicked(next);
-  };
-  const allOn = list.length > 0 && list.every((u) => picked.has(u.key));
-  const toggleAll = () => {
-    const next = new Set(picked);
-    list.forEach((u) => (allOn ? next.delete(u.key) : next.add(u.key)));
-    setPicked(next);
-  };
-
-  const onAssign = () => {
-    // TODO: POST /api/user-shift  { userKeys: [...picked], shift: target }
-    setUsers(users.map((u) => (picked.has(u.key) ? { ...u, shift: target === UNASSIGNED ? "" : target } : u)));
-    notify(`${picked.size} user(s) assigned`);
-    setPicked(new Set());
-  };
+function Panel({ title, note, rows, picked, setPicked, q, setQ, dept, setDept, depts, showShift, total, extra }) {
+  const allOn = rows.length > 0 && rows.every((e) => picked.has(e.id));
+  const toggle = (id) => { const n = new Set(picked); n.has(id) ? n.delete(id) : n.add(id); setPicked(n); };
+  const toggleAll = () => { const n = new Set(picked); rows.forEach((e) => (allOn ? n.delete(e.id) : n.add(e.id))); setPicked(n); };
+  const cols = ["ক্রমিক", "আইডি", "কর্মচারীর নাম", "বিভাগ", "পদবি", ...(showShift ? ["শিফট"] : [])];
 
   return (
-    <>
-      {/* Filters */}
-      <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
-        <div>
-          <label className={labelCls}>User type</label>
-          <select className={inputCls} value={fType} onChange={(e) => setFType(e.target.value)}>
-            <option value="">All</option><option>শিক্ষক</option><option>কর্মচারী</option><option>শিক্ষার্থী</option>
-          </select>
-        </div>
-        <div>
-          <label className={labelCls}>Session</label>
-          <select className={inputCls}><option>All</option><option>2026</option></select>
-        </div>
-        <div>
-          <label className={labelCls}>Class</label>
-          <select className={inputCls}><option>All</option></select>
-        </div>
-        <div>
-          <label className={labelCls}>Residence</label>
-          <select className={inputCls}><option>All</option><option>আবাসিক</option><option>অনাবাসিক</option></select>
-        </div>
-        <div>
-          <label className={labelCls}>Shift</label>
-          <select className={inputCls} value={fShift} onChange={(e) => setFShift(e.target.value)}>
-            <option value="">All</option>
-            {SHIFTS.map((s) => <option key={s}>{s}</option>)}
-            <option value={UNASSIGNED}>Unassigned only</option>
-          </select>
-        </div>
-        <div>
-          <label className={labelCls}>Search</label>
-          <input className={inputCls} placeholder="Code or name…" value={q} onChange={(e) => setQ(e.target.value)} />
-        </div>
+    <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+      <h3 className="mb-2 text-sm font-semibold">{title} <span className="font-normal text-slate-500">{note}</span></h3>
+      <div className="mb-2 flex gap-2">
+        <input className={input} placeholder="কর্মচারীর নাম, আইডি বা বিভাগ দিয়ে খুঁজুন..." value={q} onChange={(e) => setQ(e.target.value)} />
+        <select className={input + " !w-40"} value={dept} onChange={(e) => setDept(e.target.value)}>
+          <option value="">সকল বিভাগ</option>
+          {depts.map((d) => <option key={d}>{d}</option>)}
+        </select>
       </div>
-
-      <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
-        {/* Users table */}
-        <div className={`${cardCls} overflow-x-auto`}>
-          <div className="mb-2 flex items-center justify-between text-xs text-slate-500">
-            <span>{list.length} user(s) shown</span>
-            <button className="text-teal-700 hover:underline dark:text-teal-400" onClick={() => setFShift(UNASSIGNED)}>
-              {users.filter((u) => !u.shift).length} unassigned · show
-            </button>
-          </div>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 text-left text-xs text-slate-500 dark:border-slate-700">
-                <th className="px-2 py-2"><input type="checkbox" checked={allOn} onChange={toggleAll} /></th>
-                {["Code", "Name", "Father", "Shift", "Schedule"].map((h) => (
-                  <th key={h} className="whitespace-nowrap px-2 py-2 font-medium">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {list.map((u) => (
-                <tr key={u.key} className="border-b border-slate-100 hover:bg-teal-50 dark:border-slate-800 dark:hover:bg-slate-800">
-                  <td className="px-2 py-2"><input type="checkbox" checked={picked.has(u.key)} onChange={() => toggle(u.key)} /></td>
-                  <td className="px-2 py-2 tabular-nums">{u.code}</td>
-                  <td className="whitespace-nowrap px-2 py-2">{u.name}</td>
-                  <td className="px-2 py-2">{u.father}</td>
-                  <td className="whitespace-nowrap px-2 py-2">
-                    {u.shift || (
-                      <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">Unassigned</span>
+      {extra && <div className="mb-2">{extra}</div>}
+      <div className="max-h-72 overflow-auto rounded-lg border border-slate-200 dark:border-slate-700">
+        <table className="w-full text-sm">
+          <thead className="sticky top-0 bg-slate-100 dark:bg-slate-800">
+            <tr>
+              <th className={th}><input type="checkbox" checked={allOn} onChange={toggleAll} /></th>
+              {cols.map((c) => <th key={c} className={th}>{c}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((e, i) => (
+              <tr key={e.id} className="border-t border-slate-100 hover:bg-blue-50 dark:border-slate-800 dark:hover:bg-slate-800">
+                <td className={td}><input type="checkbox" checked={picked.has(e.id)} onChange={() => toggle(e.id)} /></td>
+                <td className={td}>{i + 1}</td>
+                <td className={td + " tabular-nums"}>{e.id}</td>
+                <td className={td}>{e.name}</td>
+                <td className={td}>{e.dept}</td>
+                <td className={td}>{e.desig}</td>
+                {showShift && (
+                  <td className={td}>
+                    {e.shift || (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">অ্যাসাইন হয়নি</span>
                     )}
                   </td>
-                  <td className="whitespace-nowrap px-2 py-2">{u.schedule || "—"}</td>
-                </tr>
-              ))}
-              {list.length === 0 && (
-                <tr><td colSpan={6} className="px-2 py-6 text-center text-slate-500">No users match these filters.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Selected panel */}
-        <div className={cardCls}>
-          <h2 className="mb-3 text-sm font-semibold">
-            Selected <span className="font-normal text-slate-500">({picked.size})</span>
-          </h2>
-          <label className={labelCls}>Assign to shift</label>
-          <select className={inputCls} value={target} onChange={(e) => setTarget(e.target.value)}>
-            {SHIFTS.map((s) => <option key={s}>{s}</option>)}
-            <option value={UNASSIGNED}>— Remove from shift —</option>
-          </select>
-
-          <ul className="mt-3 max-h-64 divide-y divide-slate-100 overflow-auto text-sm dark:divide-slate-800">
-            {[...picked].map((k) => {
-              const u = users.find((x) => x.key === k);
-              return (
-                <li key={k} className="flex items-center justify-between py-1.5">
-                  <span>{u.code} · {u.name}</span>
-                  <button onClick={() => toggle(k)} className="rounded px-2 hover:bg-slate-200 dark:hover:bg-slate-700">✕</button>
-                </li>
-              );
-            })}
-          </ul>
-          {picked.size === 0 && <p className="mt-3 text-sm text-slate-500">Tick users in the table to add them here.</p>}
-
-          <button className={`${btnPrimary} mt-4`} disabled={!picked.size} onClick={onAssign}>
-            Save assignment
-          </button>
-        </div>
+                )}
+              </tr>
+            ))}
+            {rows.length === 0 && (
+              <tr><td colSpan={cols.length + 1} className="px-3 py-6 text-center text-slate-500">কোনো কর্মচারী পাওয়া যায়নি।</td></tr>
+            )}
+          </tbody>
+        </table>
       </div>
-    </>
+      <div className="mt-2 flex gap-4 text-xs text-slate-500">
+        <span>মোট রেকর্ড: {total}</span>
+        <span>নির্বাচিত: {picked.size}</span>
+      </div>
+    </div>
   );
 }
