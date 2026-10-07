@@ -72,7 +72,16 @@ export const shiftQuerySlice = createApi({
     // time_switch
     getTimeSwitchs: builder.query({
       query: () => `view_time_switch`,
-      providesTags: ["time_switchs"],
+      providesTags: ["TimeSwitchs"],
+    }),
+    createTimeSwitch: builder.mutation({
+      query: (data) => ({
+        url: 'create_time_switch',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['TimeSwitchs'],
+
     }),
 
   }),
@@ -89,5 +98,6 @@ export const {
   useGetSingleTimeCheckQuery,
   useUpdateTimeCheckMutation,
   useGetTimeSwitchsQuery,
+  useCreateTimeSwitchMutation,
 
 } = shiftQuerySlice;

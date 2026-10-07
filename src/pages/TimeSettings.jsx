@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
 import DefaultSelect from "../components/DefaultSelect";
 import DefaultInput from "../components/DefaultInput";
-import { useGetShiftListQuery, useGetTimeCheckListQuery, useGetTimeSwitchsQuery } from "../features/shift/shiftQuerySlice";
+import { useCreateTimeSwitchMutation, useGetShiftListQuery, useGetTimeCheckListQuery, useGetTimeSwitchsQuery } from "../features/shift/shiftQuerySlice";
 import { FormProvider, useForm } from "react-hook-form";
 import { useGetSessionsQuery } from "../features/session/sessionQuerySlice";
 import TimePicker from "../components/TimePicker";
 import DatePickerOne from "../components/DatePickerOne";
 import { showModal } from "../utils/ModalControlar";
 import convertBijoyToBengali from "../utils/uniconveter";
-
+import { toast } from 'react-toastify';
 /* ------------------------------------------------------------------ *
  * TimeSetting.jsx – "Switchin Setting" MAIN AREA
  * ------------------------------------------------------------------ */
@@ -106,6 +106,18 @@ const parseTimeString = (timeValue) => {
 
 const withSeconds = (t) => (t && t.length === 5 ? t + ":00" : t);
 
+const formatTimeForSql = (value) => {
+  if (!value) return null;
+
+  const date = value instanceof Date ? value : new Date(value);
+
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+
+  return `${hours}:${minutes}:${seconds}.0000000`;
+};
+
 const card = "rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900";
 const input = "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/25 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100";
 const btnBlue = "inline-flex items-center justify-center gap-2 rounded-lg bg-clay px-4 py-2 text-sm font-medium text-white hover:bg-clay disabled:cursor-not-allowed disabled:opacity-40";
@@ -120,7 +132,6 @@ export default function TimeSetting() {
   const [activeStatus, setActiveStatus] = useState({});
   const [autoOn, setAutoOn] = useState(true);
   const [editId, setEditId] = useState(null);
-  const [toast, setToast] = useState("");
 
   // ---- React Hook Form – Auto Switch Setting ----
   const switchMethods = useForm({
@@ -166,6 +177,8 @@ export default function TimeSetting() {
     isError: isSessionError,
   } = useGetSessionsQuery();
 
+  const [createTimeSwitch, { isLoading, error }] = useCreateTimeSwitchMutation
+
   const shiftOptions = shiftList ?? [];
   const timeCheckOptions = timeCheckList ?? [];
 
@@ -202,23 +215,41 @@ export default function TimeSetting() {
     }));
   };
 
-  const onSave = (data) => {
+  const onSave = async (data) => {
     if (!data.startTime || !data.lateTime || !data.endTime) return notify("সব সময় পূরণ করুন");
     const ruleData = {
-      shift: data.shiftId,
-      sw: data.switchType,
-      start: withSeconds(data.startTime),
-      late: withSeconds(data.lateTime),
-      end: withSeconds(data.endTime),
+      ShiftID: Number(data.shiftId),
+      CheckTypeID: Number(data.switchType),
+      StartTime: formatTimeForSql(data.startTime),
+      StartLate: formatTimeForSql(data.lateTime),
+      EndTime: formatTimeForSql(data.endTime),
     };
-    // TODO: POST / PUT /api/switch-rules (also send data.dateFrom, data.dateTo, data.sessionName)
-    if (editId) {
-      setRules(rules.map((r) => (r.id === editId ? { ...r, ...ruleData } : r)));
-    } else {
-      setRules([...rules, { id: Math.max(0, ...rules.map((r) => r.id)) + 1, active: true, ...ruleData }]);
+
+    // console.log(ruleData);
+
+    try {
+      await createTimeSwitch(ruleData).unwrap();
+      toast.success('Shift Time Switch created successfully!', {
+        progressStyle: {
+          background: '#C9724F',
+        },
+      });
+    } catch (error) {
+      toast.error(
+        error?.data?.message || 'Failed to add student. Please try again.'
+      );
     }
-    onReset();
-    notify("সংরক্ষণ হয়েছে");
+
+
+
+    // TODO: POST / PUT /api/switch-rules (also send data.dateFrom, data.dateTo, data.sessionName)
+    // if (editId) {
+    //   setRules(rules.map((r) => (r.id === editId ? { ...r, ...ruleData } : r)));
+    // } else {
+    //   setRules([...rules, { id: Math.max(0, ...rules.map((r) => r.id)) + 1, active: true, ...ruleData }]);
+    // }
+    // onReset();
+    // notify("সংরক্ষণ হয়েছে");
   };
 
   const openShiftEntryModal = () => {
