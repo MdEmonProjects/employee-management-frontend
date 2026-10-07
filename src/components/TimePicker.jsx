@@ -40,7 +40,7 @@ const TimePicker = ({
     <div>
       {timeCalender ? (
         <label
-          className="mb-1 block text-black font-SolaimanLipi"
+          className="mb-1 block text-black font-bold text-sm"
           htmlFor={registerKey}
         >
           {timeCalender} :
@@ -93,7 +93,7 @@ const TimePicker = ({
                 }
               }
             }}
-            className={`w-full font-default rounded-lg text-sm h-11 px-3 outline-none transition-all duration-200 ease-in-out bg-white text-gray-900`}
+            className={`w-full font-default rounded-lg text-sm h-11 px-3 outline-none transition-all duration-200 ease-in-out bg-white text-gray-900 border border-gray-300 placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 hover:border-gray-400`}
           />
         )}
       />

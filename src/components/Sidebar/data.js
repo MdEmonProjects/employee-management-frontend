@@ -42,6 +42,13 @@ export const menuData = [
     icon: 'Dashboard',
     subMenu: [
       {
+        id: '40',
+        name: 'সময় সেটিংস',
+        route: '',
+        icon: '',
+        subMenu: false,
+      },
+      {
         id: '41',
         name: 'সিফটের তালিকা',
         route: 'shiftlist',

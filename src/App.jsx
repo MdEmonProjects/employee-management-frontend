@@ -39,9 +39,9 @@ export default function App() {
             <Route path="classlist" element={<ClassList />} />
           </Route>
           <Route path="timesetting">
+            <Route index element={<TimeSetting />} />
             <Route path="shiftlist" element={<TimeShiftList />} />
             <Route path="timechecklist" element={<TimeCheckList />} />
-            <Route path="timesettings" element={<TimeSetting />} />
           </Route>
 
           <Route path="settings" element={<Settings />} />

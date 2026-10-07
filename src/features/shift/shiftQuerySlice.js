@@ -69,6 +69,12 @@ export const shiftQuerySlice = createApi({
       invalidatesTags: ['TimeCheckList'],
     }),
 
+    // time_switch
+    getTimeSwitchs: builder.query({
+      query: () => `view_time_switch`,
+      providesTags: ["time_switchs"],
+    }),
+
   }),
 });
 
@@ -82,5 +88,6 @@ export const {
   useGetTimeCheckListQuery,
   useGetSingleTimeCheckQuery,
   useUpdateTimeCheckMutation,
+  useGetTimeSwitchsQuery,
 
 } = shiftQuerySlice;
