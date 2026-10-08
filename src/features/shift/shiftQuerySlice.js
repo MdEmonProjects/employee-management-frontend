@@ -15,7 +15,7 @@ export const shiftQuerySlice = createApi({
       return headers;
     },
   }),
-  tagTypes: ['ShiftList', 'TimeCheckList'],
+  tagTypes: ['ShiftList', 'TimeCheckList', 'TimeSwitchs', 'TimeShiftAssignments'],
   endpoints: (builder) => ({
     // GET endpoints
     getShiftList: builder.query({
@@ -83,6 +83,47 @@ export const shiftQuerySlice = createApi({
       invalidatesTags: ['TimeSwitchs'],
 
     }),
+    updateTimeSwitch: builder.mutation({
+      query: ({ id, ...data }) => ({
+        url: `update_time_switch/${id}`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['TimeSwitchs'],
+    }),
+    deleteTimeSwitch: builder.mutation({
+      query: (id) => ({
+        url: `delete_time_switch/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['TimeSwitchs'],
+    }),
+    getTimeShiftAssignmentOptions: builder.query({
+      query: () => 'time_shift_assignment_options',
+    }),
+    getTimeShiftAssignments: builder.query({
+      query: ({ SessionID, SubClassID, ShiftID }) => ({
+        url: 'view_time_shift_assignments',
+        params: { SessionID, SubClassID, ShiftID },
+      }),
+      providesTags: ['TimeShiftAssignments'],
+    }),
+    assignTimeShift: builder.mutation({
+      query: (data) => ({
+        url: 'assign_time_shift',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['TimeShiftAssignments'],
+    }),
+    removeTimeShiftAssignment: builder.mutation({
+      query: (data) => ({
+        url: 'remove_time_shift_assignment',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['TimeShiftAssignments'],
+    }),
 
   }),
 });
@@ -99,5 +140,11 @@ export const {
   useUpdateTimeCheckMutation,
   useGetTimeSwitchsQuery,
   useCreateTimeSwitchMutation,
+  useUpdateTimeSwitchMutation,
+  useDeleteTimeSwitchMutation,
+  useGetTimeShiftAssignmentOptionsQuery,
+  useGetTimeShiftAssignmentsQuery,
+  useAssignTimeShiftMutation,
+  useRemoveTimeShiftAssignmentMutation,
 
 } = shiftQuerySlice;

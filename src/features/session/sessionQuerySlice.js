@@ -14,21 +14,21 @@ export const sessionQuerySlice = createApi({
       return headers;
     },
   }),
-  tagTypes: ['Sessions'], // ✅ Add tag for cache invalidation
+  tagTypes: ['Sessions', 'SubClasses'],
   endpoints: (builder) => ({
     getSessions: builder.query({
-      query: () => 'sessionlist',
+      query: () => 'session',
       providesTags: ['Sessions'], // ✅ Refetch when invalidated
     }),
 
     getSession: builder.query({
-      query: (id) => `get_session/${id}`,
+      query: (id) => `session/${id}`,
       providesTags: (result, error, id) => [{ type: 'Sessions', id }],
     }),
 
     addSession: builder.mutation({
       query: (newSession) => ({
-        url: 'insert_session',
+        url: 'session',
         method: 'POST',
         body: newSession,
       }),
@@ -37,7 +37,7 @@ export const sessionQuerySlice = createApi({
 
     updateSession: builder.mutation({
       query: ({ id, data }) => ({
-        url: `update_session/${id}`,
+        url: `session/${id}`,
         method: 'PUT',
         body: data, // send updated fields directly
       }),

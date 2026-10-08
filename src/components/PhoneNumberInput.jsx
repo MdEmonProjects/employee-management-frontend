@@ -180,17 +180,17 @@ const PhoneNumberInput = ({
 
   return (
     <div
-      className={`w-full font-SolaimanLipi ${labelPosition === 'left' ? 'flex items-center gap-4' : ''
+      className={`min-w-0 w-full font-SolaimanLipi ${labelPosition === 'left' ? 'flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-4' : ''
         }`}
     >
       {label && (
         <label
           htmlFor={registerKey}
-          className={`${labelPosition === 'left' ? 'w-2/5 text-end' : 'mb-1 block'
+          className={`${labelPosition === 'left' ? 'w-full sm:w-2/5 sm:text-end' : 'mb-1 block'
             }`}
         >
           <div
-            className={`flex text-sm font-bold items-center gap-1 ${labelPosition === 'left' ? 'justify-end' : ''
+            className={`flex text-sm font-bold items-center gap-1 ${labelPosition === 'left' ? 'sm:justify-end' : ''
               }`}
           >
             <span className={labelColor}>{label}</span>
@@ -200,7 +200,7 @@ const PhoneNumberInput = ({
         </label>
       )}
 
-      <div className={labelPosition === 'left' ? 'flex-1' : 'w-full'}>
+      <div className={labelPosition === 'left' ? 'min-w-0 flex-1' : 'w-full'}>
         <input
           type="text"
           placeholder={placeholder}

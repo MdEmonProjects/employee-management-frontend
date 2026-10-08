@@ -77,13 +77,13 @@ const DatePickerOne = ({
 
   return (
     <div
-      className={`w-full ${labelPosition === 'left' ? 'flex items-center gap-4' : ''}`}
+      className={`min-w-0 w-full ${labelPosition === 'left' ? 'flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-4' : ''}`}
     >
       {dateCalender && (
         <label
           htmlFor={registerKey}
           className={`text-black font-bold text-sm ${labelPosition === 'left'
-            ? 'w-1/4 min-w-[100px] mb-0 text-end'
+            ? 'w-full sm:w-1/4 sm:min-w-[100px] sm:text-end'
             : 'mb-1 block'
             }`}
         >
@@ -91,7 +91,7 @@ const DatePickerOne = ({
         </label>
       )}
 
-      <div className={labelPosition === 'left' ? 'flex-1' : 'w-full'}>
+      <div className={labelPosition === 'left' ? 'min-w-0 flex-1' : 'w-full'}>
         <Controller
           name={registerKey}
           control={control}

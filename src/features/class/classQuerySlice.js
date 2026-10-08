@@ -39,10 +39,10 @@ export const classQuerySlice = createApi({
       invalidatesTags: ['ClassList'],
     }),
     updateClass: builder.mutation({
-      query: (studentData) => ({
-        url: `update_class/${studentData.id}`,
+      query: ({ id, data }) => ({
+        url: `update_class/${id}`,
         method: 'PUT',
-        body: studentData,
+        body: data,
       }),
       invalidatesTags: ['ClassList'],
     }),

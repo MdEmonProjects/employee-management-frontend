@@ -16,6 +16,7 @@ import UserEdit from './pages/UserEdit';
 import TimeShiftList from './pages/TimeShiftList';
 import TimeCheckList from './pages/TimeCheckList';
 import TimeSetting from './pages/TimeSettings';
+import SessionList from './pages/SessionList';
 export default function App() {
   return (
     <BrowserRouter>
@@ -37,6 +38,7 @@ export default function App() {
             <Route path="user_edit/:userId" element={<UserEdit />} />
             <Route path="user_entry/:classid" element={<UserEntry />} />
             <Route path="classlist" element={<ClassList />} />
+            <Route path="sessionlist" element={<SessionList />} />
           </Route>
           <Route path="timesetting">
             <Route index element={<TimeSetting />} />

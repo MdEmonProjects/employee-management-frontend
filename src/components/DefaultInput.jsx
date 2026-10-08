@@ -57,17 +57,17 @@ const DefaultInput = ({
 
   return (
     <div
-      className={`w-full ${labelPosition === 'left' ? 'flex items-center gap-4' : ''
+      className={`min-w-0 w-full ${labelPosition === 'left' ? 'flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-4' : ''
         }`}
     >
       {label && (
         <label
           htmlFor={registerKey}
-          className={`font-bold text-sm ${labelPosition === 'left' ? 'w-2/5 mb-0 text-end' : 'mb-1.5 block'
+          className={`font-bold text-sm ${labelPosition === 'left' ? 'w-full sm:w-2/5 sm:text-end' : 'mb-1.5 block'
             }`}
         >
           <div
-            className={`flex items-center gap-2 ${labelPosition === 'left' ? 'justify-end' : 'justify-between'
+            className={`flex items-center gap-2 ${labelPosition === 'left' ? 'sm:justify-end' : 'justify-between'
               }`}
           >
             <div className="flex items-center gap-1">
@@ -79,7 +79,7 @@ const DefaultInput = ({
         </label>
       )}
 
-      <div className={labelPosition === 'left' ? 'flex-1' : 'w-full'}>
+      <div className={labelPosition === 'left' ? 'min-w-0 flex-1' : 'w-full'}>
         <input
           type={type === 'number' || type === 'phone' ? 'number' : type}
           placeholder={placeholder}

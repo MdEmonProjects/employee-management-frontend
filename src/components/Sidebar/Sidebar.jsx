@@ -82,14 +82,13 @@ export default function Sidebar() {
   return (
     <aside
       ref={asideRef}
-      style={!sidebarCollapsed ? { width: sidebarWidth } : undefined}
+      style={{ '--sidebar-width': `${sidebarCollapsed ? 64 : sidebarWidth}px` }}
       className={`
-        fixed inset-y-0 left-0 z-40 flex flex-col border-r border-gray-200 bg-gray-50
+        app-sidebar fixed inset-y-0 left-0 z-50 flex max-w-full flex-col border-r border-gray-200 bg-gray-50
         md:static md:translate-x-0
         ${isResizingSidebar ? '' : 'transition-[transform,width] duration-200 ease-out'}
         ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         ${sidebarCollapsed ? 'md:w-16' : ''}
-        w-64
       `}
     >
 
@@ -150,7 +149,7 @@ export default function Sidebar() {
         </button>
       </div> */}
 
-      <nav className="mt-1 space-y-0.5 px-2">
+      <nav className="mt-1 min-h-0 flex-1 space-y-0.5 overflow-y-auto px-2 pb-2">
         {menuData.map((item) => {
           const hasSubmenu = Array.isArray(item.subMenu) && item.subMenu.length > 0;
           const isSubmenuOpen = openSubmenuId === item.id;
@@ -215,7 +214,7 @@ export default function Sidebar() {
       </nav>
 
       {/* <div className={`mt-3 px-4 text-xs font-medium text-gray-400 ${sidebarCollapsed ? 'md:hidden' : ''}`}>Recents</div> */}
-      <nav className="mt-1 flex-1 space-y-0.5 overflow-y-auto px-2">
+      <nav className="hidden">
         {/* {conversations.map((conversation) => (
           <div
             key={conversation.id}

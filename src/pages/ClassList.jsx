@@ -1,29 +1,34 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import SvgIcon from '../components/icons/SvgIcon';
 import SortableTable from '../components/SortableTable';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { useGetClassListQuery } from '../features/class/classQuerySlice';
 import { showModal } from '../utils/ModalControlar';
 export default function ClassList() {
   const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
   const {
     data: classList,
     isLoading: isClassLoading,
     isError: isClassError,
   } = useGetClassListQuery();
-  const pageSize = 10;
-
-
-  useEffect(() => {
-    console.log(classList);
-  }, [classList])
-
+  const filteredClasses = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return classList || [];
+    return (classList || []).filter((item) =>
+      [item.ClassName, item.EnglishClass, item.ArabicClass].some((value) =>
+        String(value || '').toLowerCase().includes(term)
+      )
+    );
+  }, [classList, search]);
 
   const openClassEntryModal = () => {
     showModal("Add Class", "CLASS_ENTRY")
 
   }
+
+  const openClassEditModal = (id) => {
+    showModal('ক্লাস গ্রুপ সম্পাদনা', 'CLASS_EDIT', id);
+  };
 
   const columnsMadrasah = [
     {
@@ -44,7 +49,14 @@ export default function ClassList() {
     {
       title: "অ্যাকশন",
       render: (row) => (
-        <div className="space-x-2">
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => openClassEditModal(row.ClassID)}
+            className="rounded-full border border-clay px-4 py-2 text-[15px] font-medium text-clay hover:bg-brand-50"
+          >
+            সম্পাদনা
+          </button>
           <NavLink to={`/dashboard/academic/user_entry/${row.ClassID}`} className="button--primary rounded-full bg-clay border-border px-5 py-2 text-[17px] font-medium text-white cursor-pointer">
             নিবন্ধন
           </NavLink>
@@ -91,15 +103,16 @@ export default function ClassList() {
                 <circle cx="11" cy="11" r="8" />
                 <path d="m21 21-4.35-4.35" />
               </svg>
-              <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="ক্লাস গ্রুপের নাম অনুসন্ধান করুন" className="h-10 w-full rounded-md border border-border bg-surface px-3 pl-9 text-sm text-foreground outline-none focus:border-accent" />
+              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="ক্লাস গ্রুপের নাম অনুসন্ধান করুন" className="h-10 w-full rounded-md border border-border bg-surface px-3 pl-9 text-sm text-foreground outline-none focus:border-accent" />
             </label>
 
           </div>
 
 
-          {
-            classList && classList.length > 0 ? <SortableTable columns={columnsMadrasah} data={classList} isFilterColumn={false} /> : null
-          }
+          {isClassLoading ? <p className="py-8 text-center text-sm text-muted">তালিকা লোড হচ্ছে...</p>
+            : isClassError ? <p className="py-8 text-center text-sm text-red-600">ক্লাস গ্রুপের তালিকা আনা যায়নি।</p>
+            : filteredClasses.length > 0 ? <SortableTable columns={columnsMadrasah} data={filteredClasses} isFilterColumn={false} />
+            : <p className="py-8 text-center text-sm text-muted">কোনো ক্লাস গ্রুপ পাওয়া যায়নি।</p>}
 
 
         </div>

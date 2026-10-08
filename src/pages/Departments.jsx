@@ -30,9 +30,9 @@ export default function Departments() {
     ];
 
     return (
-        <div className="flex-1 pt-[50px]">
-            <div className="container mx-auto">
-                <div className="header_area flex justify-between">
+        <div className="min-w-0 flex-1">
+            <div className="mx-auto w-full max-w-[1600px] px-3 py-4 sm:px-5 sm:py-6 lg:px-8">
+                <div className="header_area flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <h1 className="text-[24px] font-medium">Departments</h1>
                     <button onClick={handleDepartmentCreate} className="bg-black text-white px-3 py-2 rounded-[10px] text-[14px]">New Departments</button>
                 </div>
@@ -40,7 +40,7 @@ export default function Departments() {
                 {isLoading && <p className="pt-[60px] text-center text-[#52514E]">Loading departments...</p>}
                 {isError && <p className="pt-[60px] text-center text-red-600">Unable to load departments.</p>}
                 {!isLoading && !isError && departments.length > 0 && (
-                    <div className="mt-8 grid grid-cols-3">
+                    <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
 
                         <div className="flex min-h-0 flex-1 flex-col self-stretch gap-[20px] rounded-[10px] p-[14px] border border-[#0b0b0b1a]">
                             <div className="flex items-start gap-md gap-[20px]">

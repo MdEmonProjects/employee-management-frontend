@@ -3,9 +3,9 @@ import SvgIcon from "../components/icons/SvgIcon";
 
 export default function Settings() {
     return (
-        <div className="flex-1">
-            <div className="container mx-auto">
-                <div className="grid grid-cols-2 xl:grid-cols-6 gap-4">
+        <div className="min-w-0 flex-1">
+            <div className="mx-auto w-full max-w-[1600px] px-3 py-4 sm:px-5 sm:py-6 lg:px-8">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                     <div className="card bg-[#ffffff80] border border-[#0b0b0b1a] rounded-[5px] p-4">
                         <Link to={"/dashboard/departments"}>
                             <div className="icon mb-2 text-[#0b0b0b] text-center flex align-center justify-center">

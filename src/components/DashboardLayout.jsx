@@ -8,19 +8,26 @@ export default function DashboardLayout() {
   const dispatch = useDispatch();
   const { mobileSidebarOpen } = useSelector((state) => state.ui);
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      {mobileSidebarOpen && (<div className="fixed inset-0 z-20 bg-black/30 md:hidden" onClick={() => dispatch(closeMobileSidebar())} />)}
+    <div className="flex h-dvh min-h-0 w-full min-w-0 overflow-hidden bg-background">
+      {mobileSidebarOpen && (
+        <button
+          type="button"
+          aria-label="Close menu"
+          className="fixed inset-0 z-40 cursor-default bg-black/40 md:hidden"
+          onClick={() => dispatch(closeMobileSidebar())}
+        />
+      )}
       <Sidebar />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
-        <div className="flex min-h-0 flex-1 flex-col min-w-0 overflow-y-auto">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto">
           <div className="sticky top-0 z-30 shrink-0">
             <header className="flex min-h-16 w-full shrink-0 items-center justify-between gap-2 border-b border-border/50 bg-surface px-3 py-2 sm:gap-3 sm:px-4 lg:h-20 lg:gap-4 lg:px-6 lg:py-0">
               <div className="flex min-w-0 flex-1 items-center gap-3 lg:gap-4">
-                {/* <button
+                <button
                   type="button"
                   aria-label="Open menu"
                   onClick={() => dispatch(openMobileSidebar())}
-                  className="shrink-0 text-muted hover:text-foreground transition-colors lg:hidden"
+                  className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-secondary hover:text-foreground md:hidden"
                 >
                   <svg
                     stroke="currentColor"
@@ -35,7 +42,7 @@ export default function DashboardLayout() {
                   >
                     <path d="M4 6h16M4 12h16M4 18h16" />
                   </svg>
-                </button> */}
+                </button>
                 <div className="min-w-0 flex-1 lg:hidden" aria-label="মাদরাসার তথ্য">
                   <p className="text-xs font-semibold leading-tight text-clay whitespace-normal wrap-break-word font-bengali">
                     ইক্বরা বালিকা মাদরাসা (অনাবাসিক), ৩৩, প্রধান সড়ক, কল্যাণপুর, মিরপুর,
@@ -156,7 +163,7 @@ export default function DashboardLayout() {
             </div> */}
           </div>
 
-          <main className="min-h-0 flex-1 bg-dashboard-workspace">
+          <main className="min-h-0 min-w-0 flex-1 overflow-x-hidden bg-dashboard-workspace">
             <Outlet />
           </main>
         </div>

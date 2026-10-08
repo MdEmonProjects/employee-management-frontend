@@ -61,14 +61,14 @@ const DefaultSelect = ({
 
   return (
     <div
-      className={` font-SolaimanLipi w-full ${labelPosition === "left" ? "flex items-center gap-4" : ""
+      className={`min-w-0 w-full font-SolaimanLipi ${labelPosition === "left" ? "flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-4" : ""
         }`}
     >
       {label && (
         <label
           htmlFor={registerKey}
           className={`font-bold text-sm ${labelPosition === "left"
-            ? "text-black"
+            ? "w-full text-black sm:w-2/5 sm:text-end"
             : "mb-1 block text-black"
             }`}
         >
@@ -80,7 +80,7 @@ const DefaultSelect = ({
         </label>
       )}
 
-      <div className={labelPosition === "left" ? "flex-1" : ""}>
+      <div className={labelPosition === "left" ? "min-w-0 flex-1" : "min-w-0 w-full"}>
         <div
           id={`${registerKey}-dropdown`}
           className="relative z-20 bg-transparent"
