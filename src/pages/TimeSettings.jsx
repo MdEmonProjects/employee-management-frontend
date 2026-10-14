@@ -117,10 +117,10 @@ export default function TimeSetting() {
   const [deleteTimeSwitch, { isLoading: isDeleting }] = useDeleteTimeSwitchMutation();
   const { data: assignmentOptions } = useGetTimeShiftAssignmentOptionsQuery();
   const [assignmentSessionId, setAssignmentSessionId] = useState("");
-  const [assignmentSubClassId, setAssignmentSubClassId] = useState("");
+  const [assignmentClassId, setAssignmentClassId] = useState("");
   const [assignmentShiftId, setAssignmentShiftId] = useState("");
   const assignmentFiltersReady = Boolean(
-    assignmentSessionId && assignmentSubClassId && assignmentShiftId,
+    assignmentSessionId && assignmentClassId && assignmentShiftId,
   );
   const {
     data: assignmentData,
@@ -129,7 +129,7 @@ export default function TimeSetting() {
   } = useGetTimeShiftAssignmentsQuery(
     {
       SessionID: assignmentSessionId,
-      SubClassID: assignmentSubClassId,
+      ClassID: assignmentClassId,
       ShiftID: assignmentShiftId,
     },
     { skip: !assignmentFiltersReady },
@@ -243,7 +243,7 @@ export default function TimeSetting() {
       UserIDs: Array.from(selected),
       ShiftID: Number(assignmentShiftId),
       SessionID: Number(assignmentSessionId),
-      SubClassID: Number(assignmentSubClassId),
+      ClassID: Number(assignmentClassId),
     };
 
     if (direction === "assign") {
@@ -328,61 +328,6 @@ export default function TimeSetting() {
                     nameField="TypeNameBangla"
                     defaultValue="ধরন নির্বাচন করুন"
                   />
-                </div>
-
-                {/* সেশন নাম */}
-                <div>
-                  <DefaultSelect
-                    label="সেশন নাম"
-                    registerKey="SessionID"
-                    options={sessionList ?? []}
-                    valueField="SessionID"
-                    nameField="SessionName"
-                    defaultValue="সেশন নির্বাচন করুন"
-                  />
-                </div>
-
-                {/* শিফট শুরু তারিখ */}
-                <div>
-                  <label
-                    htmlFor={"dateFrom"}
-                    className={`font-bold text-sm`}
-                  >
-                    <div className="flex items-center gap-1">
-                      <span>শিফট শুরু তারিখ</span>
-                      <span>:</span>
-                    </div>
-                  </label>
-                  <DatePickerOne require={false} registerKey={`dateFrom`} placeholder={"Date"} timestamp={false} />
-
-                  {/* <DefaultInput
-                    label="শিফট শুরু তারিখ"
-                    type="date"
-                    registerKey="dateFrom"
-                    placeholder=""
-                  /> */}
-                </div>
-
-                {/* শিফট শেষ তারিখ */}
-                <div>
-
-                  <label
-                    htmlFor={"dateFrom"}
-                    className={`font-bold text-sm`}
-                  >
-                    <div className="flex items-center gap-1">
-                      <span>শিফট শেষ তারিখ</span>
-                      <span>:</span>
-                    </div>
-                  </label>
-
-                  {/* <DefaultInput
-                    label="শিফট শেষ তারিখ"
-                    type="date"
-                    registerKey="dateTo"
-                    placeholder=""
-                  /> */}
-                  <DatePickerOne require={false} registerKey={`dateTo`} placeholder={"Date"} timestamp={false} />
                 </div>
 
                 {/* শুরুর সময় */}
@@ -569,20 +514,20 @@ export default function TimeSetting() {
           </label>
 
           <label className="text-sm font-medium">
-            <span className="mb-1 block">সাবক্লাস <span className="text-red-500">*</span></span>
+            <span className="mb-1 block">ক্লাস <span className="text-red-500">*</span></span>
             <select
               className={input}
-              value={assignmentSubClassId}
+              value={assignmentClassId}
               onChange={(event) => {
-                setAssignmentSubClassId(event.target.value);
+                setAssignmentClassId(event.target.value);
                 setPickL(new Set());
                 setPickR(new Set());
               }}
             >
-              <option value="">সাবক্লাস নির্বাচন করুন</option>
-              {(assignmentOptions?.subClasses ?? []).map((subClass) => (
-                <option key={subClass.SubClassID} value={subClass.SubClassID}>
-                  {subClass.SubClass || subClass.SubClassEng || `সাবক্লাস #${convertBijoyToBengali(subClass.SubClassID)}`}
+              <option value="">ক্লাস নির্বাচন করুন</option>
+              {(assignmentOptions?.classes ?? []).map((cls) => (
+                <option key={cls.ClassID} value={cls.ClassID}>
+                  {cls.ClassName}
                 </option>
               ))}
             </select>
@@ -618,7 +563,7 @@ export default function TimeSetting() {
 
         {!assignmentFiltersReady ? (
           <div className="rounded-lg border border-dashed border-slate-300 px-4 py-10 text-center text-sm text-slate-500 dark:border-slate-700">
-            শিক্ষার্থীর তালিকা দেখতে সেশন, সাবক্লাস এবং শিফট নির্বাচন করুন।
+            শিক্ষার্থীর তালিকা দেখতে সেশন, ক্লাস এবং শিফট নির্বাচন করুন।
           </div>
         ) : isAssignmentLoading ? (
           <div className="px-4 py-10 text-center text-sm text-slate-500">তালিকা লোড হচ্ছে...</div>

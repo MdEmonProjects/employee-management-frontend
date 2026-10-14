@@ -9,6 +9,7 @@ import { classQuerySlice } from '../features/class/classQuerySlice';
 import { sessionQuerySlice } from '../features/session/sessionQuerySlice';
 import { userQuerySlice } from '../features/user/userQuerySlice';
 import { shiftQuerySlice } from '../features/shift/shiftQuerySlice';
+import { attendanceQuerySlice } from '../features/attendance/attendanceQuerySlice';
 
 export const store = configureStore({
   reducer: {
@@ -22,6 +23,7 @@ export const store = configureStore({
     [sessionQuerySlice.reducerPath]: sessionQuerySlice.reducer,
     [userQuerySlice.reducerPath]: userQuerySlice.reducer,
     [shiftQuerySlice.reducerPath]: shiftQuerySlice.reducer,
+    [attendanceQuerySlice.reducerPath]: attendanceQuerySlice.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
@@ -30,7 +32,8 @@ export const store = configureStore({
       .concat(classQuerySlice.middleware)
       .concat(sessionQuerySlice.middleware)
       .concat(userQuerySlice.middleware)
-      .concat(shiftQuerySlice.middleware),
+      .concat(shiftQuerySlice.middleware)
+      .concat(attendanceQuerySlice.middleware),
 });
 
 export default store;

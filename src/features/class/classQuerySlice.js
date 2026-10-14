@@ -17,9 +17,7 @@ export const classQuerySlice = createApi({
   }),
   tagTypes: [
     'ClassList',
-    'SubClassList',
     'Academic_Subjects',
-    'SubClasss',
     'Class_Routine',
     'Class_Videos',
     'TimeSlot',
@@ -50,24 +48,12 @@ export const classQuerySlice = createApi({
       query: (id) => `single_class/${id}`,
       providesTags: ['ClassList'],
     }),
-    getSubClassLisByClassID: builder.query({
-      query: (id) => `view_subclass/${id}`,
-      providesTags: ['SubClassList'],
-    }),
-    getSubClassList: builder.query({
-      query: () => 'view_subclass',
-      providesTags: ['SubClassList'],
-    }),
     getAcademicSubjects: builder.query({
-      query: (SubClassID) => ({
+      query: (ClassID) => ({
         url: 'academic_subjects',
-        params: SubClassID ? { SubClassID } : {},
+        params: ClassID ? { ClassID } : {},
       }),
       providesTags: ['Academic_Subjects'],
-    }),
-    getSubClasss: builder.query({
-      query: () => 'view_subclass',
-      providesTags: ['SubClasss'],
     }),
 
     // POST endpoint - Create new academic subject
@@ -102,17 +88,13 @@ export const classQuerySlice = createApi({
       query: (id) => `academic_subjects/last-serial/${id}`,
       providesTags: ['Academic_Subjects'],
     }),
-    getAcademicSubjectsBySubClass: builder.query({
-      query: (id) => `academic_subjects/by-subclass/${id}`,
-      providesTags: ['ClassList', 'Academic_Subjects'],
-    }),
     // ==================== Video Tutorial ====================
     getVideoTutorialLinks: builder.query({
-      query: ({ SessionID, SubClassID }) => ({
+      query: ({ SessionID, ClassID }) => ({
         url: `/get_video_tutorial_link`,
         params: {
           ...(SessionID && { SessionID }),
-          ...(SubClassID && { SubClassID }),
+          ...(ClassID && { ClassID }),
         },
       }),
       providesTags: (result) =>
@@ -181,7 +163,7 @@ export const classQuerySlice = createApi({
     // ============= Class Routine ===================
     getClassRoutines: builder.query({
       // query function receives params for pagination & filter
-      query: ({ page = 1, limit = 20, SessionID, SubClassID } = {}) => {
+      query: ({ page = 1, limit = 20, SessionID, ClassID } = {}) => {
         // build query string dynamically
         const params = new URLSearchParams();
 
@@ -189,7 +171,7 @@ export const classQuerySlice = createApi({
         params.append('limit', limit);
 
         if (SessionID) params.append('SessionID', SessionID);
-        if (SubClassID) params.append('SubClassID', SubClassID);
+        if (ClassID) params.append('ClassID', ClassID);
 
         return `gr_class_routine?${params.toString()}`;
       },
@@ -224,10 +206,6 @@ export const classQuerySlice = createApi({
       }),
       invalidatesTags: ['Class_Routine'],
     }),
-    getSingleSubClass: builder.query({
-      query: (id) => `single_sub_class/${id}`,
-      providesTags: ['SingleSubClass'],
-    }),
     getStudentCountInfo: builder.query({
       query: () => '/student_count',
     }),
@@ -247,10 +225,7 @@ export const classQuerySlice = createApi({
 // Export all hooks
 export const {
   useGetClassListQuery,
-  useGetSubClassListQuery,
-  useGetSubClassLisByClassIDQuery,
   useGetAcademicSubjectsQuery,
-  useGetSubClasssQuery,
   useCreateAcademicSubjectMutation,
   useUpdateAcademicSubjectMutation,
   useDeleteAcademicSubjectMutation,
@@ -258,7 +233,6 @@ export const {
   useCreateClassMutation,
   useUpdateClassMutation,
   useGetSingleClassQuery,
-  useGetAcademicSubjectsBySubClassQuery,
   useGetClassRoutinesQuery,
   useCreateClassRoutineMutation,
   useUpdateClassRoutineMutation,
@@ -274,7 +248,6 @@ export const {
   useGetClassRoutineDaysQuery,
   useCreateTimeSlotMutation,
   useDeleteTimeSlotMutation,
-  useGetSingleSubClassQuery,
   useGetStudentCountInfoQuery,
   useGetExamClassSubjectsQuery
 } = classQuerySlice;
