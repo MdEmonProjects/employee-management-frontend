@@ -1,12 +1,59 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { Outlet } from 'react-router-dom';
 import { closeMobileSidebar, openMobileSidebar } from '../features/ui/uiSlice';
+import { useGetCurrentInstitutionQuery } from '../features/institution/institutionQuerySlice';
 import Sidebar from './Sidebar/Sidebar';
 import DefaultModal from './DefaultModal';
+
+const API_URL = (import.meta.env.VITE_SERVER_URL || 'http://localhost:3000').replace(
+  /\/$/,
+  '',
+);
+
+function institutionAssetUrl(value) {
+  if (!value) return '';
+  if (/^(https?:|data:|blob:)/i.test(value)) return value;
+  const path = value.includes('/') ? value : `/public/${value}`;
+  return `${API_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+}
 
 export default function DashboardLayout() {
   const dispatch = useDispatch();
   const { mobileSidebarOpen } = useSelector((state) => state.ui);
+  const {
+    data: institution,
+    isLoading: institutionLoading,
+    isError: institutionError,
+  } = useGetCurrentInstitutionQuery();
+
+  const institutionName =
+    institution?.InstitutionName ||
+    institution?.EngInstitutionName ||
+    institution?.AraInstitutionName ||
+    '';
+  const institutionAddress =
+    institution?.Address ||
+    institution?.EngAddress ||
+    institution?.AraAddress ||
+    [
+      institution?.Village,
+      institution?.PostOffice,
+      institution?.PoliceStation,
+      institution?.District,
+    ]
+      .filter(Boolean)
+      .join(', ');
+  const institutionHeading = [institutionName, institutionAddress]
+    .filter(Boolean)
+    .join(', ');
+  const institutionCode = institution?.InstitutionCode;
+  const institutionLogo = institutionAssetUrl(institution?.Logo);
+  const institutionStatus = institutionLoading
+    ? 'প্রতিষ্ঠানের তথ্য লোড হচ্ছে…'
+    : institutionError
+      ? 'প্রতিষ্ঠানের তথ্য লোড করা যায়নি'
+      : 'প্রতিষ্ঠানের তথ্য পাওয়া যায়নি';
+
   return (
     <div className="flex h-dvh min-h-0 w-full min-w-0 overflow-hidden bg-background">
       {mobileSidebarOpen && (
@@ -43,56 +90,37 @@ export default function DashboardLayout() {
                     <path d="M4 6h16M4 12h16M4 18h16" />
                   </svg>
                 </button>
+                {institutionLogo && (
+                  <img
+                    src={institutionLogo}
+                    alt={`${institutionName || 'প্রতিষ্ঠান'} লোগো`}
+                    className="size-10 shrink-0 rounded-lg object-contain lg:size-12"
+                  />
+                )}
                 <div className="min-w-0 flex-1 lg:hidden" aria-label="মাদরাসার তথ্য">
                   <p className="text-xs font-semibold leading-tight text-clay whitespace-normal wrap-break-word font-bengali">
-                    ইক্বরা বালিকা মাদরাসা (অনাবাসিক), ৩৩, প্রধান সড়ক, কল্যাণপুর, মিরপুর,
-                    ঢাকা-১২০৭, মিরপুর, ঢাকা (মহানগর)
+                    {institutionHeading || institutionStatus}
                   </p>
-                  <p className="truncate text-[11px] leading-tight text-muted">
-                    কোড B00015153
-                  </p>
-                  {/* <p className="text-[11px] leading-snug whitespace-normal wrap-break-word font-bengali">
-                    <span className="font-normal text-muted">মারকায </span>
-                    <span className="font-semibold text-foreground">
-                      দরসিয়াত — উম্মুল মুমেনীন হযরত আয়েশা সিদ্দিকা (রাঃ) বালিকা মাদরাসা
-                    </span>
-                  </p> */}
+                  {institutionCode != null && (
+                    <p className="truncate text-[11px] leading-tight text-muted">
+                      কোড {institutionCode}
+                    </p>
+                  )}
                 </div>
                 <div className="hidden lg:flex flex-1 grow min-w-0 flex-col justify-center items-center gap-1.5" aria-label="মাদরাসার তথ্য">
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 leading-snug">
                     <p className="text-xl font-semibold leading-snug text-clay whitespace-normal wrap-break-word font-bengali">
-                      ইক্বরা বালিকা মাদরাসা (অনাবাসিক), ৩৩, প্রধান সড়ক, কল্যাণপুর, মিরপুর,
-                      ঢাকা-১২০৭, মিরপুর, ঢাকা (মহানগর)
+                      {institutionHeading || institutionStatus}
                     </p>
-                    {/* <span className="inline-flex items-center gap-1.5 whitespace-normal">
-                      <span className="shrink-0 text-sm text-muted">ইলহাক</span>
-                      <span className="text-sm font-semibold wrap-break-word text-brand-600">
-                        ম-3/5116
+                    {institutionCode != null && (
+                      <span className="inline-flex items-center gap-1.5 whitespace-normal">
+                        <span className="shrink-0 text-sm text-muted">কোড</span>
+                        <span className="text-sm font-semibold wrap-break-word text-clay">
+                          {institutionCode}
+                        </span>
                       </span>
-                    </span> */}
-                    <span className="inline-flex items-center gap-1.5 whitespace-normal">
-                      <span className="shrink-0 text-sm text-muted">কোড</span>
-                      <span className="text-sm font-semibold wrap-break-word text-clay">
-                        B00015153
-                      </span>
-                    </span>
-                    {/* <span className="inline-flex items-center gap-1.5 whitespace-normal">
-                      <span className="shrink-0 text-sm text-muted">
-                        সর্বোচ্চ মারহালা
-                      </span>
-                      <span className="text-sm font-semibold wrap-break-word text-brand-600 font-bengali">
-                        সানাবিয়া উলিয়া
-                      </span>
-                    </span> */}
+                    )}
                   </div>
-                  {/* <div className="flex text-sm font-semibold flex-wrap items-center gap-x-4 gap-y-1 leading-snug">
-                    <span className="inline-flex items-center gap-1.5 whitespace-normal">
-                      <span className="shrink-0 text-sm text-muted">মারকায</span>
-                      <span className="text-sm font-semibold wrap-break-word font-bengali">
-                        দরসিয়াত — উম্মুল মুমেনীন হযরত আয়েশা সিদ্দিকা (রাঃ) বালিকা মাদরাসা
-                      </span>
-                    </span>
-                  </div> */}
                 </div>
               </div>
               <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">

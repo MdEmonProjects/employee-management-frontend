@@ -16,6 +16,7 @@ import TimeShiftList from './pages/TimeShiftList';
 import TimeCheckList from './pages/TimeCheckList';
 import TimeSetting from './pages/TimeSettings';
 import SessionList from './pages/SessionList';
+import InstituteInfo from './pages/InstituteInfo';
 export default function App() {
   return (
     <BrowserRouter>
@@ -46,6 +47,7 @@ export default function App() {
           </Route>
 
           <Route path="settings" element={<Settings />} />
+          <Route path="settings/institute-info" element={<InstituteInfo />} />
           <Route path="departments" element={<Departments />} />
         </Route>
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

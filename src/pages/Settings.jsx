@@ -6,6 +6,22 @@ export default function Settings() {
         <div className="min-w-0 flex-1">
             <div className="mx-auto w-full max-w-[1600px] px-3 py-4 sm:px-5 sm:py-6 lg:px-8">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                    <div className="card rounded-[5px] border border-[#0b0b0b1a] bg-[#ffffff80] p-4 transition hover:border-brand-500 hover:shadow-sm">
+                        <Link to="/dashboard/settings/institute-info">
+                            <div className="icon mb-2 flex items-center justify-center text-[#0b0b0b]">
+                                <svg xmlns="http://www.w3.org/2000/svg" width={40} height={40} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.25} strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M3 21h18" />
+                                    <path d="M5 21V7l7-4 7 4v14" />
+                                    <path d="M9 21v-6h6v6" />
+                                    <path d="M9 9h.01" />
+                                    <path d="M15 9h.01" />
+                                    <path d="M9 12h.01" />
+                                    <path d="M15 12h.01" />
+                                </svg>
+                            </div>
+                            <p className="text-center text-[16px]">প্রতিষ্ঠানের তথ্য</p>
+                        </Link>
+                    </div>
                     <div className="card bg-[#ffffff80] border border-[#0b0b0b1a] rounded-[5px] p-4">
                         <Link to={"/dashboard/departments"}>
                             <div className="icon mb-2 text-[#0b0b0b] text-center flex align-center justify-center">

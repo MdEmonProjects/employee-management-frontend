@@ -7,19 +7,40 @@ const todayText = () => {
   return new Date(now.getTime() - offset).toISOString().slice(0, 10);
 };
 
+const toBanglaDigits = (value) =>
+  String(value).replace(/\d/g, (digit) => '০১২৩৪৫৬৭৮৯'[Number(digit)]);
+
+const formatCount = (value) => Number(value || 0).toLocaleString('bn-BD');
+
+const formatCheckType = (value) => {
+  const labels = {
+    in: 'প্রবেশ',
+    checkin: 'প্রবেশ',
+    'check in': 'প্রবেশ',
+    entry: 'প্রবেশ',
+    out: 'প্রস্থান',
+    checkout: 'প্রস্থান',
+    'check out': 'প্রস্থান',
+    exit: 'প্রস্থান',
+  };
+  return labels[String(value || '').trim().toLowerCase()] || value || '—';
+};
+
 const formatPunchTime = (value) => {
   if (!value) return '—';
   const [hoursText, minutes] = value.split(':');
   const hours = Number(hoursText);
   if (!Number.isFinite(hours)) return value;
-  return `${hours % 12 || 12}:${minutes} ${hours >= 12 ? 'PM' : 'AM'}`;
+  return `${toBanglaDigits(hours % 12 || 12)}:${toBanglaDigits(minutes)} ${
+    hours >= 12 ? 'অপরাহ্ণ' : 'পূর্বাহ্ণ'
+  }`;
 };
 
 const formatUpdatedTime = (value) => {
-  if (!value) return 'Waiting for update';
+  if (!value) return 'হালনাগাদের অপেক্ষায়';
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Updated just now';
-  return `Updated ${date.toLocaleTimeString([], {
+  if (Number.isNaN(date.getTime())) return 'এইমাত্র হালনাগাদ হয়েছে';
+  return `সর্বশেষ হালনাগাদ ${date.toLocaleTimeString('bn-BD', {
     hour: 'numeric',
     minute: '2-digit',
     second: '2-digit',
@@ -92,7 +113,7 @@ export default function Dashboard() {
         <div>
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              Live attendance
+              সরাসরি উপস্থিতি
             </h1>
             {isToday && (
               <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
@@ -100,36 +121,36 @@ export default function Dashboard() {
                   <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500 opacity-70" />
                   <span className="relative inline-flex size-2 rounded-full bg-emerald-600" />
                 </span>
-                LIVE
+                সরাসরি
               </span>
             )}
           </div>
           <p className="mt-1 text-sm text-muted">
-            Card punches appear automatically within a few seconds.
+            কার্ড পাঞ্চের তথ্য কয়েক সেকেন্ডের মধ্যে স্বয়ংক্রিয়ভাবে দেখা যাবে।
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted">
           <span className={`size-2 rounded-full ${isError ? 'bg-red-500' : 'bg-emerald-500'}`} />
-          {isError ? 'Connection problem' : formatUpdatedTime(data?.updatedAt)}
+          {isError ? 'সংযোগে সমস্যা হয়েছে' : formatUpdatedTime(data?.updatedAt)}
         </div>
       </div>
 
       <div className="mb-6 grid gap-3 sm:grid-cols-3">
         <StatCard
-          label="Punches"
-          value={summary.total}
+          label="মোট পাঞ্চ"
+          value={formatCount(summary.total)}
           tone="blue"
           icon={<span className="text-xl" aria-hidden="true">▣</span>}
         />
         <StatCard
-          label="On time"
-          value={summary.onTime}
+          label="সময়মতো"
+          value={formatCount(summary.onTime)}
           tone="green"
           icon={<span className="text-xl" aria-hidden="true">✓</span>}
         />
         <StatCard
-          label="Late"
-          value={summary.late}
+          label="বিলম্বিত"
+          value={formatCount(summary.late)}
           tone="amber"
           icon={<span className="text-xl" aria-hidden="true">◷</span>}
         />
@@ -138,14 +159,14 @@ export default function Dashboard() {
       <section className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm">
         <div className="flex flex-col gap-3 border-b border-border p-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className="font-semibold text-foreground">Recent card punches</h2>
+            <h2 className="font-semibold text-foreground">সাম্প্রতিক কার্ড পাঞ্চ</h2>
             <p className="text-xs text-muted">
-              {filteredRecords.length} {filteredRecords.length === 1 ? 'record' : 'records'} shown
+              {formatCount(filteredRecords.length)}টি রেকর্ড দেখানো হচ্ছে
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <label className="relative min-w-0 sm:w-72">
-              <span className="sr-only">Search attendance</span>
+              <span className="sr-only">উপস্থিতি খুঁজুন</span>
               <svg className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <circle cx="11" cy="11" r="7" />
                 <path d="m20 20-3.5-3.5" />
@@ -153,7 +174,7 @@ export default function Dashboard() {
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search name, ID, card or device"
+                placeholder="নাম, আইডি, কার্ড বা ডিভাইস খুঁজুন"
                 className="h-10 w-full rounded-xl border border-border bg-white pl-9 pr-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
               />
             </label>
@@ -163,7 +184,7 @@ export default function Dashboard() {
               max={todayText()}
               onChange={(event) => setSelectedDate(event.target.value || todayText())}
               className="h-10 rounded-xl border border-border bg-white px-3 text-sm text-foreground outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-              aria-label="Attendance date"
+              aria-label="উপস্থিতির তারিখ"
             />
             <button
               type="button"
@@ -176,7 +197,7 @@ export default function Dashboard() {
                 <path d="M4 18v-5h5" />
                 <path d="M18.4 9A7 7 0 0 0 6.1 6.1L4 8M20 16l-2.1 1.9A7 7 0 0 1 5.6 15" />
               </svg>
-              Refresh
+              হালনাগাদ
             </button>
           </div>
         </div>
@@ -184,14 +205,14 @@ export default function Dashboard() {
         {isError ? (
           <div className="p-10 text-center">
             <div className="mx-auto grid size-12 place-items-center rounded-full bg-red-50 text-xl text-red-600">!</div>
-            <h3 className="mt-3 font-semibold text-foreground">Could not load attendance</h3>
-            <p className="mt-1 text-sm text-muted">Check the server connection and try again.</p>
+            <h3 className="mt-3 font-semibold text-foreground">উপস্থিতির তথ্য লোড করা যায়নি</h3>
+            <p className="mt-1 text-sm text-muted">সার্ভার সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।</p>
             <button type="button" onClick={refetch} className="mt-4 rounded-lg bg-clay px-4 py-2 text-sm font-medium text-white hover:bg-clay-dark">
-              Try again
+              আবার চেষ্টা করুন
             </button>
           </div>
         ) : isLoading ? (
-          <div className="space-y-3 p-5" aria-label="Loading attendance">
+          <div className="space-y-3 p-5" aria-label="উপস্থিতির তথ্য লোড হচ্ছে">
             {[1, 2, 3, 4].map((item) => (
               <div key={item} className="h-14 animate-pulse rounded-xl bg-surface-secondary" />
             ))}
@@ -200,14 +221,14 @@ export default function Dashboard() {
           <div className="p-12 text-center">
             <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-emerald-50 text-2xl text-emerald-700">▣</div>
             <h3 className="mt-4 font-semibold text-foreground">
-              {search ? 'No matching attendance' : 'No card punches yet'}
+              {search ? 'মিলেছে এমন উপস্থিতির তথ্য নেই' : 'এখনও কোনো কার্ড পাঞ্চ নেই'}
             </h3>
             <p className="mx-auto mt-1 max-w-sm text-sm text-muted">
               {search
-                ? 'Try a different name, ID, card number or device.'
+                ? 'অন্য নাম, আইডি, কার্ড নম্বর বা ডিভাইস দিয়ে খুঁজুন।'
                 : isToday
-                  ? 'New punches will appear here automatically.'
-                  : 'There are no attendance records for this date.'}
+                  ? 'নতুন পাঞ্চ এখানে স্বয়ংক্রিয়ভাবে দেখা যাবে।'
+                  : 'এই তারিখে কোনো উপস্থিতির রেকর্ড নেই।'}
             </p>
           </div>
         ) : (
@@ -215,12 +236,12 @@ export default function Dashboard() {
             <table className="w-full min-w-[850px] text-left text-sm">
               <thead className="bg-table-header-bg text-xs font-semibold uppercase tracking-wide text-muted">
                 <tr>
-                  <th className="px-5 py-3">Employee / student</th>
-                  <th className="px-5 py-3">Punch time</th>
-                  <th className="px-5 py-3">Type</th>
-                  <th className="px-5 py-3">Shift</th>
-                  <th className="px-5 py-3">Device</th>
-                  <th className="px-5 py-3">Status</th>
+                  <th className="px-5 py-3">কর্মচারী / শিক্ষার্থী</th>
+                  <th className="px-5 py-3">পাঞ্চের সময়</th>
+                  <th className="px-5 py-3">ধরন</th>
+                  <th className="px-5 py-3">শিফট</th>
+                  <th className="px-5 py-3">ডিভাইস</th>
+                  <th className="px-5 py-3">অবস্থা</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -234,8 +255,8 @@ export default function Dashboard() {
                         <div className="min-w-0">
                           <p className="font-semibold text-foreground">{record.userName}</p>
                           <p className="text-xs text-muted">
-                            ID: {record.userCode ?? record.userId ?? '—'}
-                            {record.cardNumber ? ` · Card: ${record.cardNumber}` : ''}
+                            আইডি: {record.userCode ?? record.userId ?? '—'}
+                            {record.cardNumber ? ` · কার্ড: ${record.cardNumber}` : ''}
                           </p>
                         </div>
                       </div>
@@ -243,12 +264,12 @@ export default function Dashboard() {
                     <td className="px-5 py-4 font-semibold tabular-nums text-foreground">
                       {formatPunchTime(record.punchTime)}
                     </td>
-                    <td className="px-5 py-4 text-foreground">{record.checkType}</td>
+                    <td className="px-5 py-4 text-foreground">{formatCheckType(record.checkType)}</td>
                     <td className="px-5 py-4 text-muted">{record.shiftName || '—'}</td>
-                    <td className="px-5 py-4 text-muted">{record.deviceName || `Device ${record.deviceId ?? '—'}`}</td>
+                    <td className="px-5 py-4 text-muted">{record.deviceName || `ডিভাইস ${record.deviceId ?? '—'}`}</td>
                     <td className="px-5 py-4">
                       <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${record.status === 'late' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}>
-                        {record.status === 'late' ? 'Late' : 'On time'}
+                        {record.status === 'late' ? 'বিলম্বিত' : 'সময়মতো'}
                       </span>
                     </td>
                   </tr>
