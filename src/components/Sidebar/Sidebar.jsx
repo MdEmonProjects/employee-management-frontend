@@ -15,6 +15,7 @@ import {
   toggleSidebarCollapsed as toggleUiSidebarCollapsed,
 } from '../../features/ui/uiSlice';
 import SvgIcon from '../icons/SvgIcon';
+import Brand from '../Brand';
 import { menuData } from './data';
 
 export default function Sidebar() {
@@ -92,11 +93,9 @@ export default function Sidebar() {
       `}
     >
 
-      <div className="flex items-center gap-2 p-3">
-        <div className={`flex flex-1 items-center gap-2 ${sidebarCollapsed ? 'md:justify-center' : ''}`}>
-          <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-clay text-sm font-bold text-white">D</div>
-          <span className={`text-[20px] font-semibold text-gray-900 ${sidebarCollapsed ? 'md:hidden' : ''}`}>সাইডবার</span>
-        </div>
+      <div className={`flex min-h-16 items-center ${sidebarCollapsed ? 'p-3 pr-8 md:justify-center md:p-2' : 'p-3 pr-8'}`}>
+        <Brand className={`max-w-60 ${sidebarCollapsed ? 'md:hidden' : ''}`} />
+        {sidebarCollapsed && <Brand compact className="hidden size-10 md:block" />}
         {/* <button
           onClick={() => dispatch(toggleUiSidebarCollapsed())}
           className="hidden h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 md:flex ml-[14px]"

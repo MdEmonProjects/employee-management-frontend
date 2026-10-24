@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { loginSuccess } from '../features/auth/authSlice';
 import { useLoginMutation } from '../features/auth/authQuerySlice';
+import Brand from '../components/Brand';
 
 export default function Login() {
   const {
@@ -45,9 +46,7 @@ export default function Login() {
   return (
     <div className="flex min-h-dvh items-center justify-center bg-white p-3 sm:p-6">
       <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-9">
-        <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-clay text-white text-lg">
-          ✦
-        </div>
+        <Brand className="mb-5 max-w-60" />
         <h1 className="font-serif text-2xl font-semibold text-gray-900">Sign in</h1>
         <p className="mt-1.5 mb-7 text-sm leading-relaxed text-gray-500">
           Sign in with your administrator account.

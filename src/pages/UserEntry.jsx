@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect } from 'react';
 import SvgIcon from '../components/icons/SvgIcon';
 import { FormProvider, useForm } from 'react-hook-form';
 import PhoneNumberInput from '../components/PhoneNumberInput';
@@ -11,36 +11,38 @@ import { toast } from 'react-toastify';
 
 export default function UserEntry() {
   const methods = useForm();
-  const { handleSubmit, setValue } = methods;
+  const { handleSubmit, reset, setValue } = methods;
 
-  const {
-    data: sessionList,
-    isLoading: isSessionLoading,
-    isError: isSessionError,
-  } = useGetSessionsQuery();
+  const { data: sessionList } = useGetSessionsQuery();
   const { classid } = useParams();
-  const [createUser, { isLoading, error }] = useCreateUserMutation();
+  const [createUser, { isLoading }] = useCreateUserMutation();
 
   useEffect(() => {
     if (classid) {
       setValue("ClassID", classid)
     }
-  }, [classid])
+  }, [classid, setValue]);
 
   const onSubmit = async (data) => {
-    console.log(data);
-
     try {
       await createUser(data).unwrap();
-      toast.success('Student created successfully!', {
+      toast.success('শিক্ষার্থী সফলভাবে নিবন্ধিত হয়েছে।', {
         progressStyle: {
           background: '#C9724F',
         },
       });
-    } catch (error) {
-      toast.error(
-        error?.data?.message || 'Failed to add student. Please try again.'
-      );
+      reset({
+        UserName: '',
+        GenderID: '',
+        FatherName: '',
+        MotherName: '',
+        SessionID: '',
+        Mobile1: '',
+        Mobile2: '',
+        ClassID: classid ?? '',
+      });
+    } catch {
+      toast.error('শিক্ষার্থী নিবন্ধন করা যায়নি। আবার চেষ্টা করুন।');
     }
   };
   return (

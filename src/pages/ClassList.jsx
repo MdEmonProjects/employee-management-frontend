@@ -2,15 +2,18 @@ import { useMemo, useState } from 'react';
 import SvgIcon from '../components/icons/SvgIcon';
 import SortableTable from '../components/SortableTable';
 import { NavLink } from 'react-router-dom';
-import { useGetClassListQuery } from '../features/class/classQuerySlice';
+import { useDeleteClassMutation, useGetClassListQuery } from '../features/class/classQuerySlice';
 import { showModal } from '../utils/ModalControlar';
+import { toast } from 'react-toastify';
 export default function ClassList() {
   const [search, setSearch] = useState('');
+  const [deleteClass, { isLoading: isDeleting }] = useDeleteClassMutation();
   const {
     data: classList,
     isLoading: isClassLoading,
     isError: isClassError,
-  } = useGetClassListQuery();
+    refetch: refetchClasses,
+  } = useGetClassListQuery(undefined, { refetchOnMountOrArgChange: true });
   const filteredClasses = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return classList || [];
@@ -28,6 +31,19 @@ export default function ClassList() {
 
   const openClassEditModal = (id) => {
     showModal('ক্লাস গ্রুপ সম্পাদনা', 'CLASS_EDIT', id);
+  };
+
+  const onDeleteClass = async (row) => {
+    const className = row.ClassName || row.EnglishClass || `#${row.ClassID}`;
+    if (!window.confirm(`“${className}” ক্লাসটি মুছে ফেলবেন?`)) return;
+
+    try {
+      await deleteClass(row.ClassID).unwrap();
+      toast.success('ক্লাসটি মুছে ফেলা হয়েছে।');
+    } catch (error) {
+      toast.error(error?.data?.message || error?.data?.error || 'ক্লাসটি মুছে ফেলা যায়নি।');
+      refetchClasses();
+    }
   };
 
   const columnsMadrasah = [
@@ -60,6 +76,20 @@ export default function ClassList() {
           <NavLink to={`/dashboard/academic/user_entry/${row.ClassID}`} className="button--primary rounded-full bg-clay border-border px-5 py-2 text-[17px] font-medium text-white cursor-pointer">
             নিবন্ধন
           </NavLink>
+          {row.hasStudents ? (
+            <span className="self-center text-sm text-muted" title="এই ক্লাসে শিক্ষার্থী আছে, তাই মুছে ফেলা যাবে না।">
+              শিক্ষার্থী আছে
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onDeleteClass(row)}
+              disabled={isDeleting}
+              className="rounded-full border border-red-300 px-4 py-2 text-[15px] font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              মুছুন
+            </button>
+          )}
         </div>
       ),
     },

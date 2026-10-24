@@ -63,8 +63,8 @@ export default function UserEdit() {
 
     try {
       await updateUser({ id: userId, data }).unwrap();
-      toast.success('তথ্য সফলভাবে আপডেট হয়েছে।');
-      navigate('/dashboard/academic/userlist');
+      toast.success('শিক্ষার্থীর তথ্য সফলভাবে হালনাগাদ হয়েছে।');
+      navigate('/dashboard/academic/userlist', { replace: true });
     } catch (error) {
       toast.error(error?.data?.message || 'তথ্য আপডেট করা যায়নি।');
     }

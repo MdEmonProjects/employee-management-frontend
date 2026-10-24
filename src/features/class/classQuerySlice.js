@@ -44,6 +44,13 @@ export const classQuerySlice = createApi({
       }),
       invalidatesTags: ['ClassList'],
     }),
+    deleteClass: builder.mutation({
+      query: (id) => ({
+        url: `delete_class/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['ClassList'],
+    }),
     getSingleClass: builder.query({
       query: (id) => `single_class/${id}`,
       providesTags: ['ClassList'],
@@ -232,6 +239,7 @@ export const {
   useGetLastSerialSubjectQuery,
   useCreateClassMutation,
   useUpdateClassMutation,
+  useDeleteClassMutation,
   useGetSingleClassQuery,
   useGetClassRoutinesQuery,
   useCreateClassRoutineMutation,

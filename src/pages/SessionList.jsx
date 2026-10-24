@@ -1,13 +1,44 @@
 import { useMemo, useState } from 'react';
 import SortableTable from '../components/SortableTable';
 import SvgIcon from '../components/icons/SvgIcon';
-import { useGetSessionsQuery } from '../features/session/sessionQuerySlice';
+import { useGetSessionsQuery, useStatusUpdateSessionMutation } from '../features/session/sessionQuerySlice';
 import { showModal } from '../utils/ModalControlar';
 import convertBijoyToBengali from '../utils/uniconveter';
+import { toast } from 'react-toastify';
+
+const isActiveSession = (session) =>
+  Number(session.SessionStatus) === 1 && Number(session.SessionAction) === 1;
 
 export default function SessionList() {
   const [search, setSearch] = useState('');
-  const { data: sessions = [], isLoading, isError } = useGetSessionsQuery();
+  const [activatingId, setActivatingId] = useState(null);
+  const { data: sessions = [], isLoading, isError } = useGetSessionsQuery(
+    undefined,
+    { refetchOnMountOrArgChange: true },
+  );
+  const [updateSessionStatus, { isLoading: isUpdatingStatus }] = useStatusUpdateSessionMutation();
+  const activeSession = sessions.find(isActiveSession);
+
+  const onActivate = async (session) => {
+    const name = session.SessionName || session.SessionEngName || `#${session.SessionID}`;
+    const previous = activeSession && (
+      activeSession.SessionName || activeSession.SessionEngName || `#${activeSession.SessionID}`
+    );
+    const message = previous
+      ? `“${name}” শিক্ষাবর্ষ সক্রিয় করবেন? “${previous}” নিষ্ক্রিয় হবে।`
+      : `“${name}” শিক্ষাবর্ষ সক্রিয় করবেন?`;
+    if (!window.confirm(message)) return;
+
+    setActivatingId(session.SessionID);
+    try {
+      await updateSessionStatus({ id: session.SessionID, SessionStatus: 1 }).unwrap();
+      toast.success('শিক্ষাবর্ষ সক্রিয় করা হয়েছে।');
+    } catch (error) {
+      toast.error(error?.data?.message || error?.data?.error || 'শিক্ষাবর্ষ সক্রিয় করা যায়নি।');
+    } finally {
+      setActivatingId(null);
+    }
+  };
   const filteredSessions = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return sessions;
@@ -30,21 +61,33 @@ export default function SessionList() {
     {
       title: 'অবস্থা',
       render: (row) => (
-        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${Number(row.SessionStatus) === 1 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
-          {Number(row.SessionStatus) === 1 ? 'সক্রিয়' : 'নিষ্ক্রিয়'}
+        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${isActiveSession(row) ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+          {isActiveSession(row) ? 'সক্রিয়' : 'নিষ্ক্রিয়'}
         </span>
       ),
     },
     {
       title: 'অ্যাকশন',
       render: (row) => (
-        <button
-          type="button"
-          onClick={() => showModal('শিক্ষাবর্ষ সম্পাদনা', 'SESSION_EDIT', row.SessionID)}
-          className="rounded-full border border-clay px-4 py-2 text-sm font-medium text-clay hover:bg-brand-50"
-        >
-          সম্পাদনা
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => showModal('শিক্ষাবর্ষ সম্পাদনা', 'SESSION_EDIT', row.SessionID)}
+            className="rounded-full border border-clay px-4 py-2 text-sm font-medium text-clay hover:bg-brand-50"
+          >
+            সম্পাদনা
+          </button>
+          {!isActiveSession(row) && (
+            <button
+              type="button"
+              onClick={() => onActivate(row)}
+              disabled={isUpdatingStatus}
+              className="rounded-full bg-clay px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {activatingId === row.SessionID ? 'সক্রিয় করা হচ্ছে...' : 'সক্রিয় করুন'}
+            </button>
+          )}
+        </div>
       ),
     },
   ];
@@ -65,7 +108,7 @@ export default function SessionList() {
             </span>
             <div className="min-w-0">
               <h1 className="text-lg font-semibold text-foreground">শিক্ষাবর্ষ ব্যবস্থাপনা</h1>
-              <p className="text-sm text-muted">শিক্ষাবর্ষ তৈরি, তালিকা দেখা ও সম্পাদনা করুন</p>
+              <p className="text-sm text-muted">শিক্ষাবর্ষ তৈরি, সক্রিয় ও সম্পাদনা করুন</p>
             </div>
           </div>
           <button
