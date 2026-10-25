@@ -25,7 +25,7 @@ export default function UserEntry() {
 
   const onSubmit = async (data) => {
     try {
-      await createUser(data).unwrap();
+      await createUser({ ...data, UserTypeID: 1, ClassID: Number(classid) }).unwrap();
       toast.success('শিক্ষার্থী সফলভাবে নিবন্ধিত হয়েছে।', {
         progressStyle: {
           background: '#C9724F',

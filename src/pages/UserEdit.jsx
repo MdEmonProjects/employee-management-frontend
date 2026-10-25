@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import DefaultInput from '../components/DefaultInput';
 import DefaultSelect from '../components/DefaultSelect';
@@ -17,9 +17,17 @@ const EMPTY_OPTIONS = [];
 export default function UserEdit() {
   const { userId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: user, isLoading, isError } = useGetSingleUserQuery(userId);
-  const { data: classList = EMPTY_OPTIONS, isLoading: isClassLoading } = useGetClassListQuery();
-  const { data: sessionList = EMPTY_OPTIONS, isLoading: isSessionLoading } = useGetSessionsQuery();
+  const isNonStudent = user?.UserTypeID === 2 || user?.UserTypeID === 3;
+  const label = user?.UserTypeID === 3 ? 'অভিভাবক' : user?.UserTypeID === 2 ? 'শিক্ষক/স্টাফ' : 'শিক্ষার্থী';
+  const listPath = location.pathname.startsWith('/dashboard/guardians/')
+    ? '/dashboard/guardians/list'
+    : user?.UserTypeID === 3
+    ? '/dashboard/guardians/list'
+    : user?.UserTypeID === 2 ? '/dashboard/staff/list' : '/dashboard/academic/userlist';
+  const { data: classList = EMPTY_OPTIONS, isLoading: isClassLoading } = useGetClassListQuery(undefined, { skip: isNonStudent });
+  const { data: sessionList = EMPTY_OPTIONS, isLoading: isSessionLoading } = useGetSessionsQuery(undefined, { skip: isNonStudent });
   const [updateUser, { isLoading: isSaving }] = useUpdateUserMutation();
   const methods = useForm({
     defaultValues: {
@@ -56,15 +64,15 @@ export default function UserEdit() {
       MotherName: formData.MotherName,
       Mobile1: formData.Mobile1,
       Mobile2: formData.Mobile2,
-      ClassID: Number(formData.ClassID),
+      ...(!isNonStudent && { ClassID: Number(formData.ClassID) }),
       ...(formData.GenderID !== '' && { GenderID: Number(formData.GenderID) }),
-      ...(formData.SessionID !== '' && { SessionID: Number(formData.SessionID) }),
+      ...(!isNonStudent && formData.SessionID !== '' && { SessionID: Number(formData.SessionID) }),
     };
 
     try {
       await updateUser({ id: userId, data }).unwrap();
-      toast.success('শিক্ষার্থীর তথ্য সফলভাবে হালনাগাদ হয়েছে।');
-      navigate('/dashboard/academic/userlist', { replace: true });
+      toast.success('তথ্য সফলভাবে হালনাগাদ হয়েছে।');
+      navigate(listPath, { replace: true });
     } catch (error) {
       toast.error(error?.data?.message || 'তথ্য আপডেট করা যায়নি।');
     }
@@ -81,23 +89,23 @@ export default function UserEdit() {
   return (
     <main className="mx-auto w-full max-w-5xl px-3 py-4 sm:px-5 sm:py-6 lg:px-8">
       <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-2 text-sm text-muted">
-        <button type="button" onClick={() => navigate('/dashboard/academic/userlist')} className="hover:text-foreground">
+        <button type="button" onClick={() => navigate(listPath)} className="hover:text-foreground">
           হোম
         </button>
         <svg aria-hidden="true" className="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="m9 18 6-6-6-6" />
         </svg>
-        <span>নিবন্ধন সংক্রান্ত</span>
+        <span>{isNonStudent ? `${label} সংক্রান্ত` : 'নিবন্ধন সংক্রান্ত'}</span>
         <svg aria-hidden="true" className="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="m9 18 6-6-6-6" />
         </svg>
-        <span aria-current="page" className="truncate font-medium text-foreground">শিক্ষার্থী নিবন্ধন সম্পাদনা</span>
+        <span aria-current="page" className="truncate font-medium text-foreground">{label} সম্পাদনা</span>
       </nav>
 
       <section className="overflow-hidden rounded-md border border-border bg-surface">
         <header className="flex flex-col gap-3 border-b border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div>
-            <h1 className="text-lg font-semibold text-foreground">শিক্ষার্থী নিবন্ধন ফর্ম সম্পাদনা</h1>
+            <h1 className="text-lg font-semibold text-foreground">{label} তথ্য সম্পাদনা</h1>
             <p className="mt-1 text-sm text-muted">ব্যক্তিগত তথ্য</p>
           </div>
           <p className="text-sm text-muted">ইউজার কোড: {user.UserCode ?? '—'}</p>
@@ -112,7 +120,7 @@ export default function UserEdit() {
                   label="লিঙ্গ"
                   options={[{ id: 1, value: 'ছেলে' }, { id: 2, value: 'মহিলা' }]}
                   registerKey="GenderID"
-                  require="লিঙ্গ নির্বাচন করুন"
+                  require={isNonStudent ? false : 'লিঙ্গ নির্বাচন করুন'}
                   nameField="value"
                   valueField="id"
                   type="number"
@@ -120,7 +128,7 @@ export default function UserEdit() {
                 />
                 <DefaultInput label="পিতার নাম" placeholder="পিতার নাম" registerKey="FatherName" />
                 <DefaultInput label="মাতার নাম" placeholder="মাতার নাম" registerKey="MotherName" />
-                <DefaultSelect
+                {!isNonStudent && <DefaultSelect
                   label="সেশন"
                   options={sessionList}
                   valueField="SessionID"
@@ -128,8 +136,8 @@ export default function UserEdit() {
                   registerKey="SessionID"
                   type="number"
                   defaultValue="সেশন নির্বাচন করুন"
-                />
-                <DefaultSelect
+                />}
+                {!isNonStudent && <DefaultSelect
                   label="শ্রেণি"
                   options={classList}
                   valueField="ClassID"
@@ -138,11 +146,11 @@ export default function UserEdit() {
                   type="number"
                   require="শ্রেণি নির্বাচন করুন"
                   defaultValue="শ্রেণি নির্বাচন করুন"
-                />
+                />}
                 <PhoneNumberInput
                   label="মোবাইল ১"
                   registerKey="Mobile1"
-                  require
+                  require={!isNonStudent}
                   minLength={11}
                   maxLength={11}
                   allowedPrefixes={['013', '014', '015', '016', '017', '018', '019']}
@@ -159,7 +167,7 @@ export default function UserEdit() {
               <div className="mt-6 flex flex-wrap justify-end gap-3 border-t border-border pt-4">
                 <button
                   type="button"
-                  onClick={() => navigate('/dashboard/academic/userlist')}
+                  onClick={() => navigate(listPath)}
                   className="rounded-lg border border-border px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-surface-secondary"
                 >
                   বাতিল

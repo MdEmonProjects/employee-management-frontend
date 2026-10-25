@@ -17,6 +17,9 @@ import TimeCheckList from './pages/TimeCheckList';
 import TimeSetting from './pages/TimeSettings';
 import SessionList from './pages/SessionList';
 import InstituteInfo from './pages/InstituteInfo';
+import StaffEntry from './pages/StaffEntry';
+import GuardianList from './pages/GuardianList';
+import GuardianLinks from './pages/GuardianLinks';
 export default function App() {
   return (
     <BrowserRouter>
@@ -34,11 +37,25 @@ export default function App() {
           <Route path="dashboard" element={<Dashboard />} />
 
           <Route path="academic">
-            <Route path="userlist" element={<UserList />} />
+            <Route path="userlist" element={<UserList userType={1} />} />
             <Route path="user_edit/:userId" element={<UserEdit />} />
             <Route path="user_entry/:classid" element={<UserEntry />} />
             <Route path="classlist" element={<ClassList />} />
             <Route path="sessionlist" element={<SessionList />} />
+          </Route>
+          <Route path="staff">
+            <Route index element={<Navigate to="list" replace />} />
+            <Route path="list" element={<UserList userType={2} />} />
+            <Route path="new" element={<StaffEntry />} />
+            <Route path="edit/:userId" element={<UserEdit />} />
+          </Route>
+          <Route path="guardians">
+            <Route index element={<Navigate to="list" replace />} />
+            <Route path="list" element={<GuardianList />} />
+            <Route path="new" element={<StaffEntry userType={3} />} />
+            <Route path="edit/:userId" element={<UserEdit />} />
+            <Route path="link" element={<GuardianLinks />} />
+            <Route path=":guardianId/students" element={<GuardianLinks />} />
           </Route>
           <Route path="timesetting">
             <Route index element={<TimeSetting />} />

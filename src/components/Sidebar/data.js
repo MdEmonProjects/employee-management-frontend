@@ -36,6 +36,26 @@ export const menuData = [
     ],
   },
   {
+    id: '5',
+    name: 'শিক্ষক/স্টাফ সংক্রান্ত',
+    route: 'staff',
+    icon: 'UserPlus',
+    subMenu: [
+      { id: '51', name: 'শিক্ষক/স্টাফ তালিকা', route: 'list', icon: '', subMenu: false },
+      { id: '52', name: 'নতুন নিবন্ধন', route: 'new', icon: '', subMenu: false },
+    ],
+  },
+  {
+    id: '6',
+    name: 'অভিভাবক সংক্রান্ত',
+    route: 'guardians',
+    icon: 'UserPlus',
+    subMenu: [
+      { id: '61', name: 'অভিভাবক তালিকা', route: 'list', icon: '', subMenu: false },
+      { id: '62', name: 'নতুন নিবন্ধন', route: 'new', icon: '', subMenu: false },
+    ],
+  },
+  {
     id: '4',
     name: 'সময় সেটিংস',
     route: 'timesetting',

@@ -31,13 +31,14 @@ export const userQuerySlice = createApi({
     }),
 
     getUserBySearch: builder.query({
-      query: ({ search, ClassID, SessionID } = {}) => {
+      query: ({ search, ClassID, SessionID, UserTypeID } = {}) => {
         const params = new URLSearchParams();
         if (search) {
           params.append('search', search);
         }
         if (ClassID) params.append('ClassID', ClassID);
         if (SessionID) params.append('SessionID', SessionID);
+        if (UserTypeID) params.append('UserTypeID', UserTypeID);
         return `search_user?${params.toString()}`;
       },
       providesTags: (result) =>
@@ -61,6 +62,15 @@ export const userQuerySlice = createApi({
       ],
     }),
 
+    promoteStudents: builder.mutation({
+      query: (body) => ({
+        url: 'promote_students',
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: [{ type: 'UserList', id: 'LIST' }],
+    }),
+
   }),
 });
 
@@ -69,4 +79,5 @@ export const {
   useCreateUserMutation,
   useGetUserBySearchQuery,
   useUpdateUserMutation,
+  usePromoteStudentsMutation,
 } = userQuerySlice;

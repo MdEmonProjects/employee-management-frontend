@@ -11,6 +11,7 @@ import AddTimeCheck from '../views/AddTimeCheck';
 import UpdateTimeCheck from '../views/UpdateTimeCheck';
 import SessionForm from '../views/SessionForm';
 import UpdateClass from '../views/UpdateClass';
+import PromoteStudents from '../views/PromoteStudents';
 
 const DefaultModal = () => {
   const { isOpen, title, modalType, id, meta } = useSelector((state) => state.modal);
@@ -94,6 +95,7 @@ const DefaultModal = () => {
                   {modalType === 'ADD_DEPARTMENTS' && <AddDepartment userId={id} />}
                   {modalType === 'CLASS_ENTRY' && <AddClass />}
                   {modalType === 'CLASS_EDIT' && <UpdateClass id={id} />}
+                  {modalType === 'STUDENT_PROMOTION' && <PromoteStudents userIds={meta?.userIds} />}
                   {modalType === 'SESSION_ENTRY' && <SessionForm />}
                   {modalType === 'SESSION_EDIT' && <SessionForm id={id} />}
                   {modalType === 'SHIFT_ENTRY' && <AddShift />}
