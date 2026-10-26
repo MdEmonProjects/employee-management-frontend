@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Attendance from './pages/Attendance';
 import ProtectedRoute from './components/ProtectedRoute';
 import DashboardLayout from './components/DashboardLayout';
 import Settings from './pages/Settings';
@@ -35,6 +36,7 @@ export default function App() {
         >
           <Route index element={<Dashboard />} />
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="attendance" element={<Attendance />} />
 
           <Route path="academic">
             <Route path="userlist" element={<UserList userType={1} />} />

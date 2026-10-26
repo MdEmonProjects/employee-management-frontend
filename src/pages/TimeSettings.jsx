@@ -13,9 +13,7 @@ import {
   useUpdateTimeSwitchMutation,
 } from "../features/shift/shiftQuerySlice";
 import { FormProvider, useForm } from "react-hook-form";
-import { useGetSessionsQuery } from "../features/session/sessionQuerySlice";
 import TimePicker from "../components/TimePicker";
-import DatePickerOne from "../components/DatePickerOne";
 import { showModal } from "../utils/ModalControlar";
 import convertBijoyToBengali from "../utils/uniconveter";
 import { toast } from 'react-toastify';
@@ -84,6 +82,7 @@ const btnBlue = "inline-flex items-center justify-center gap-2 rounded-lg bg-cla
 const btnLine = "inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700";
 const th = "whitespace-nowrap px-3 pt-2 pb-1 text-left text-[16px] font-semibold text-slate-600 dark:text-slate-400 ";
 const td = "whitespace-nowrap px-3 py-2";
+const userTypeNames = { 1: "শিক্ষার্থী", 2: "শিক্ষক/স্টাফ", 3: "অভিভাবক" };
 
 export default function TimeSetting() {
   const [activeShift, setActiveShift] = useState("");
@@ -110,29 +109,28 @@ export default function TimeSetting() {
 
   const displayShifts = timeSwitchList && timeSwitchList.length > 0 ? timeSwitchList : [];
 
-  const { data: sessionList } = useGetSessionsQuery();
-
   const [createTimeSwitch, { isLoading: isCreating }] = useCreateTimeSwitchMutation();
   const [updateTimeSwitch, { isLoading: isUpdating }] = useUpdateTimeSwitchMutation();
   const [deleteTimeSwitch, { isLoading: isDeleting }] = useDeleteTimeSwitchMutation();
   const { data: assignmentOptions } = useGetTimeShiftAssignmentOptionsQuery();
+  const [assignmentUserTypeId, setAssignmentUserTypeId] = useState("0");
   const [assignmentSessionId, setAssignmentSessionId] = useState("");
   const [assignmentClassId, setAssignmentClassId] = useState("");
   const [assignmentShiftId, setAssignmentShiftId] = useState("");
-  const assignmentFiltersReady = Boolean(
-    assignmentSessionId && assignmentClassId && assignmentShiftId,
-  );
+  const isStudentAssignment = assignmentUserTypeId === "1";
   const {
-    data: assignmentData,
+    currentData: assignmentData,
     isFetching: isAssignmentLoading,
     isError: isAssignmentError,
+    refetch: refetchAssignments,
   } = useGetTimeShiftAssignmentsQuery(
     {
-      SessionID: assignmentSessionId,
-      ClassID: assignmentClassId,
-      ShiftID: assignmentShiftId,
+      UserTypeID: assignmentUserTypeId,
+      SessionID: isStudentAssignment && assignmentSessionId ? assignmentSessionId : undefined,
+      ClassID: isStudentAssignment && assignmentClassId ? assignmentClassId : undefined,
+      ShiftID: assignmentShiftId || undefined,
     },
-    { skip: !assignmentFiltersReady },
+    { refetchOnMountOrArgChange: true },
   );
   const [assignTimeShift, { isLoading: isAssigning }] = useAssignTimeShiftMutation();
   const [removeTimeShiftAssignment, { isLoading: isRemovingAssignment }] =
@@ -218,7 +216,7 @@ export default function TimeSetting() {
 
   const matchesUser = (employee, query) => {
     if (!query.trim()) return true;
-    const searchable = [employee.id, employee.code, employee.name, employee.shiftName]
+    const searchable = [employee.id, employee.code, employee.name, employee.shiftName, userTypeNames[employee.userTypeId]]
       .filter(Boolean)
       .join(" ")
       .toLowerCase();
@@ -227,6 +225,9 @@ export default function TimeSetting() {
 
   const availableUsers = assignmentData?.available ?? [];
   const assignedUsers = assignmentData?.assigned ?? [];
+  // Keep choices when a destination is selected, excluding people already in it.
+  const selectedLeft = new Set(availableUsers.filter((person) => pickL.has(person.id)).map((person) => person.id));
+  const selectedRight = new Set(assignedUsers.filter((person) => pickR.has(person.id)).map((person) => person.id));
   const left = availableUsers.filter(
     (employee) =>
       (!onlyFree || !employee.shiftId) && matchesUser(employee, qL),
@@ -236,14 +237,19 @@ export default function TimeSetting() {
   const isMovingAssignment = isAssigning || isRemovingAssignment;
 
   const moveSelectedUsers = async (direction) => {
-    const selected = direction === "assign" ? pickL : pickR;
-    if (!assignmentFiltersReady || selected.size === 0) return;
+    const selected = direction === "assign" ? selectedLeft : selectedRight;
+    if (!assignmentShiftId || isAssignmentLoading || isAssignmentError || isMovingAssignment || selected.size === 0) return;
 
     const payload = {
       UserIDs: Array.from(selected),
       ShiftID: Number(assignmentShiftId),
-      SessionID: Number(assignmentSessionId),
-      ClassID: Number(assignmentClassId),
+      UserTypeID: Number(assignmentUserTypeId),
+      ...(isStudentAssignment && assignmentSessionId && {
+        SessionID: Number(assignmentSessionId),
+      }),
+      ...(isStudentAssignment && assignmentClassId && {
+        ClassID: Number(assignmentClassId),
+      }),
     };
 
     if (direction === "assign") {
@@ -253,7 +259,7 @@ export default function TimeSetting() {
       if (
         usersChangingShift > 0 &&
         !window.confirm(
-          `নির্বাচিত ${convertBijoyToBengali(usersChangingShift)} জন শিক্ষার্থীর অন্য শিফট রয়েছে। তাদের ${activeShift} শিফটে স্থানান্তর করবেন?`,
+          `নির্বাচিত ${convertBijoyToBengali(usersChangingShift)} জন ব্যবহারকারীর অন্য শিফট রয়েছে। তাদের ${activeShift} শিফটে স্থানান্তর করবেন?`,
         )
       ) {
         return;
@@ -267,11 +273,11 @@ export default function TimeSetting() {
       setPickR(new Set());
       toast.success(
         direction === "assign"
-          ? `${convertBijoyToBengali(selected.size)} জন শিক্ষার্থীকে শিফটে যোগ করা হয়েছে।`
-          : `${convertBijoyToBengali(selected.size)} জন শিক্ষার্থীকে শিফট থেকে সরানো হয়েছে।`,
+          ? `${convertBijoyToBengali(selected.size)} জন ব্যবহারকারীকে শিফটে যোগ করা হয়েছে।`
+          : `${convertBijoyToBengali(selected.size)} জন ব্যবহারকারীকে শিফট থেকে সরানো হয়েছে।`,
       );
     } catch (requestError) {
-      toast.error(getApiError(requestError, "শিক্ষার্থীর শিফট হালনাগাদ করা যায়নি।"));
+      toast.error(getApiError(requestError, "ব্যবহারকারীর শিফট হালনাগাদ করা যায়নি।"));
     }
   };
 
@@ -282,7 +288,7 @@ export default function TimeSetting() {
       <div className="flex items-center gap-3">
         <div className="grid h-12 w-12 place-items-center rounded-xl bg-clay text-xl text-white">⚙</div>
         <div>
-          <h1 className="text-xl font-semibold">শিক্ষার্থী সময় সেটিংস</h1>
+          <h1 className="text-xl font-semibold">সময় সেটিংস</h1>
           <p className="text-[16px] lg:text-[18px] text-slate-500 dark:text-slate-400">
             শিফটের সময়সূচি, সেশন এবং অটো সুইচ সেটিংস এখানে পরিচালনা করুন।
           </p>
@@ -486,55 +492,86 @@ export default function TimeSetting() {
         </section>
       </div>
 
-      {/* Row 2: Student transfer list */}
+      {/* Row 2: Shift assignment */}
       <section className={card}>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-semibold">👥 শিক্ষার্থী নির্বাচন করুন</h2>
+          <div>
+            <h2 className="font-semibold">👥 শিফটের জন্য ব্যবহারকারী নির্বাচন করুন</h2>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">আগে ব্যবহারকারী নির্বাচন করুন, তারপর শিফট বেছে যোগ করুন।</p>
+          </div>
+          <button type="button" className={btnLine} onClick={() => refetchAssignments()} disabled={isAssignmentLoading || isMovingAssignment}>তালিকা হালনাগাদ</button>
         </div>
 
-        <div className="mb-4 grid gap-3 md:grid-cols-3">
+        <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <label className="text-sm font-medium">
-            <span className="mb-1 block">সেশন <span className="text-red-500">*</span></span>
+            <span className="mb-1 block">ব্যবহারকারীর ধরন</span>
             <select
               className={input}
-              value={assignmentSessionId}
+              value={assignmentUserTypeId}
               onChange={(event) => {
-                setAssignmentSessionId(event.target.value);
+                setAssignmentUserTypeId(event.target.value);
+                setAssignmentSessionId("");
+                setAssignmentClassId("");
                 setPickL(new Set());
                 setPickR(new Set());
+                setQL("");
+                setQR("");
+                setOnlyFree(false);
               }}
             >
-              <option value="">সেশন নির্বাচন করুন</option>
-              {(assignmentOptions?.sessions ?? []).map((session) => (
-                <option key={session.SessionID} value={session.SessionID}>
-                  {session.SessionName || session.SessionEngName || `সেশন #${convertBijoyToBengali(session.SessionID)}`}
-                </option>
-              ))}
+              <option value="0">সবাই</option>
+              <option value="1">শিক্ষার্থী</option>
+              <option value="2">শিক্ষক/স্টাফ</option>
+              <option value="3">অভিভাবক</option>
             </select>
           </label>
 
-          <label className="text-sm font-medium">
-            <span className="mb-1 block">ক্লাস <span className="text-red-500">*</span></span>
-            <select
-              className={input}
-              value={assignmentClassId}
-              onChange={(event) => {
-                setAssignmentClassId(event.target.value);
-                setPickL(new Set());
-                setPickR(new Set());
-              }}
-            >
-              <option value="">ক্লাস নির্বাচন করুন</option>
-              {(assignmentOptions?.classes ?? []).map((cls) => (
-                <option key={cls.ClassID} value={cls.ClassID}>
-                  {cls.ClassName}
-                </option>
-              ))}
-            </select>
-          </label>
+          {isStudentAssignment && (
+            <>
+              <label className="text-sm font-medium">
+                <span className="mb-1 block">সেশন</span>
+                <select
+                  className={input}
+                  value={assignmentSessionId}
+                  onChange={(event) => {
+                    setAssignmentSessionId(event.target.value);
+                    setPickL(new Set());
+                    setPickR(new Set());
+                  }}
+                >
+                  <option value="">সব সেশন</option>
+                  {(assignmentOptions?.sessions ?? []).map((session) => (
+                    <option key={session.SessionID} value={session.SessionID}>
+                      {session.SessionName || session.SessionEngName || `সেশন #${convertBijoyToBengali(session.SessionID)}`}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="text-sm font-medium">
+                <span className="mb-1 block">ক্লাস</span>
+                <select
+                  className={input}
+                  value={assignmentClassId}
+                  onChange={(event) => {
+                    setAssignmentClassId(event.target.value);
+                    setPickL(new Set());
+                    setPickR(new Set());
+                  }}
+                >
+                  <option value="">সব ক্লাস</option>
+                  {(assignmentOptions?.classes ?? []).map((cls) => (
+                    <option key={cls.ClassID} value={cls.ClassID}>
+                      {cls.ClassName}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </>
+          )}
 
           <label className="text-sm font-medium">
-            <span className="mb-1 block">শিফট <span className="text-red-500">*</span></span>
+            <span className="mb-1 block">যে শিফটে যোগ করবেন</span>
             <select
               className={input}
               value={assignmentShiftId}
@@ -544,7 +581,6 @@ export default function TimeSetting() {
                   (item) => String(item.ID) === shiftId,
                 );
                 setAssignmentShiftId(shiftId);
-                setPickL(new Set());
                 setPickR(new Set());
                 setActiveShift(
                   shift ? shift.ShiftNameBangla || shift.ShiftNameEnglish || "" : "",
@@ -561,21 +597,17 @@ export default function TimeSetting() {
           </label>
         </div>
 
-        {!assignmentFiltersReady ? (
-          <div className="rounded-lg border border-dashed border-slate-300 px-4 py-10 text-center text-sm text-slate-500 dark:border-slate-700">
-            শিক্ষার্থীর তালিকা দেখতে সেশন, ক্লাস এবং শিফট নির্বাচন করুন।
-          </div>
-        ) : isAssignmentLoading ? (
+        {isAssignmentLoading ? (
           <div className="px-4 py-10 text-center text-sm text-slate-500">তালিকা লোড হচ্ছে...</div>
         ) : isAssignmentError ? (
           <div className="rounded-lg bg-red-50 px-4 py-4 text-center text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">
-            শিক্ষার্থীর তালিকা লোড করা যায়নি। আবার চেষ্টা করুন।
+            ব্যবহারকারীর তালিকা লোড করা যায়নি। আবার চেষ্টা করুন।
           </div>
         ) : (
           <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
             <Panel
-              title="উপলব্ধ শিক্ষার্থী" note="(শিফটে যোগ করার জন্য)"
-              rows={left} picked={pickL} setPicked={setPickL}
+              title="উপলব্ধ ব্যবহারকারী" note="(শিফটে যোগ করার জন্য)"
+              rows={left} picked={selectedLeft} setPicked={setPickL}
               q={qL} setQ={setQL} showShift total={left.length}
               extra={
                 <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
@@ -588,21 +620,27 @@ export default function TimeSetting() {
               <MoveBtn
                 label="নির্বাচিত যোগ করুন"
                 icon="→"
-                disabled={!pickL.size || isMovingAssignment}
+                disabled={!assignmentShiftId || !selectedLeft.size || isMovingAssignment}
                 onClick={() => moveSelectedUsers("assign")}
               />
               <MoveBtn
                 label="নির্বাচিত অপসারণ"
                 icon="←"
-                disabled={!pickR.size || isMovingAssignment}
+                disabled={!assignmentShiftId || !selectedRight.size || isMovingAssignment}
                 onClick={() => moveSelectedUsers("remove")}
               />
             </div>
-            <Panel
-              title="নির্বাচিত শিক্ষার্থী" note={"(" + activeShift + " শিফটে আছে)"}
-              rows={right} picked={pickR} setPicked={setPickR}
-              q={qR} setQ={setQR} total={right.length}
-            />
+            {assignmentShiftId ? (
+              <Panel
+                title="শিফটে থাকা ব্যবহারকারী" note={"(" + activeShift + " শিফটে আছে)"}
+                rows={right} picked={selectedRight} setPicked={setPickR}
+                q={qR} setQ={setQR} total={right.length}
+              />
+            ) : (
+              <div className="rounded-lg border border-dashed border-slate-300 px-4 py-10 text-center text-sm text-slate-500 dark:border-slate-700">
+                বাম পাশ থেকে ব্যবহারকারী বাছাই করুন। শিফট নির্বাচন করলে সেই শিফটের ব্যবহারকারীরা এখানে দেখা যাবে।
+              </div>
+            )}
           </div>
         )}
       </section>
@@ -642,13 +680,13 @@ function Panel({ title, note, rows, picked, setPicked, q, setQ, showShift, total
     });
     setPicked(next);
   };
-  const cols = ["ক্রমিক", "শিক্ষার্থী আইডি", "শিক্ষার্থী কোড", "শিক্ষার্থীর নাম", ...(showShift ? ["বর্তমান শিফট"] : [])];
+  const cols = ["ক্রমিক", "ব্যবহারকারী আইডি", "কোড", "নাম", "ধরন", ...(showShift ? ["বর্তমান শিফট"] : [])];
 
   return (
     <div className="min-w-0 overflow-hidden rounded-lg border border-slate-200 p-3 dark:border-slate-700">
       <h3 className="mb-2 text-sm font-semibold">{title} <span className="font-normal text-slate-500">{note}</span></h3>
       <div className="mb-2">
-        <input className={input} placeholder="শিক্ষার্থীর নাম বা আইডি দিয়ে খুঁজুন..." value={q} onChange={(e) => setQ(e.target.value)} />
+        <input className={input} placeholder="নাম, আইডি বা ধরন দিয়ে খুঁজুন..." value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
       {extra && <div className="mb-2">{extra}</div>}
       <div className="max-h-72 overflow-auto rounded-lg border border-slate-200 dark:border-slate-700">
@@ -667,6 +705,7 @@ function Panel({ title, note, rows, picked, setPicked, q, setQ, showShift, total
                 <td className={td + " tabular-nums"}>{convertBijoyToBengali(e.id)}</td>
                 <td className={td + " tabular-nums"}>{e.code == null ? "—" : convertBijoyToBengali(e.code)}</td>
                 <td className={td}>{e.name}</td>
+                <td className={td}>{userTypeNames[e.userTypeId] || "—"}</td>
                 {showShift && (
                   <td className={td}>
                     {e.shiftName || (
@@ -677,7 +716,7 @@ function Panel({ title, note, rows, picked, setPicked, q, setQ, showShift, total
               </tr>
             ))}
             {rows.length === 0 && (
-              <tr><td colSpan={cols.length + 1} className="px-3 py-6 text-center text-slate-500">কোনো শিক্ষার্থী পাওয়া যায়নি।</td></tr>
+              <tr><td colSpan={cols.length + 1} className="px-3 py-6 text-center text-slate-500">কোনো ব্যবহারকারী পাওয়া যায়নি।</td></tr>
             )}
           </tbody>
         </table>

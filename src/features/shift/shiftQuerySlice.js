@@ -102,9 +102,9 @@ export const shiftQuerySlice = createApi({
       query: () => 'time_shift_assignment_options',
     }),
     getTimeShiftAssignments: builder.query({
-      query: ({ SessionID, ClassID, ShiftID }) => ({
+      query: ({ UserTypeID, SessionID, ClassID, ShiftID }) => ({
         url: 'view_time_shift_assignments',
-        params: { SessionID, ClassID, ShiftID },
+        params: { UserTypeID, SessionID, ClassID, ShiftID },
       }),
       providesTags: ['TimeShiftAssignments'],
     }),

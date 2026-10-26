@@ -19,7 +19,13 @@ export const attendanceQuerySlice = createApi({
         params: { date, limit },
       }),
     }),
+    getAttendanceRecords: builder.query({
+      query: ({ startDate, endDate, search, shiftId, checkTypeId, page }) => ({
+        url: 'records',
+        params: { startDate, endDate, search, shiftId, checkTypeId, page },
+      }),
+    }),
   }),
 });
 
-export const { useGetLiveAttendanceQuery } = attendanceQuerySlice;
+export const { useGetLiveAttendanceQuery, useGetAttendanceRecordsQuery } = attendanceQuerySlice;

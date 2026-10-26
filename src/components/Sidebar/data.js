@@ -7,6 +7,13 @@ export const menuData = [
     subMenu: false,
   },
   {
+    id: '7',
+    name: 'উপস্থিতির রেকর্ড',
+    route: 'attendance',
+    icon: 'FaCalendar',
+    subMenu: false,
+  },
+  {
     id: '2',
     name: 'নিবন্ধন সংক্রান্ত',
     route: 'academic',

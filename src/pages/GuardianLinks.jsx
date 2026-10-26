@@ -194,12 +194,12 @@ export default function GuardianLinks() {
             ))}
             <button type="button" onClick={() => setRows((current) => [...current, { studentUserId: '', relationId: '' }])} className="text-sm font-semibold text-clay">+ আরেক শিক্ষার্থী</button>
           </div>
-          <div className="flex flex-wrap items-end gap-2 rounded-md bg-surface-secondary p-3">
+          {/* <div className="flex flex-wrap items-end gap-2 rounded-md bg-surface-secondary p-3">
             <label className="min-w-[200px] flex-1 text-sm">নতুন সম্পর্ক
               <input value={relationName} onChange={(event) => setRelationName(event.target.value)} placeholder="যেমন: পিতা, মাতা" maxLength={50} className={`${fieldClass} mt-1`} />
             </label>
             <button type="button" onClick={addRelation} disabled={isCreatingRelation || !relationName.trim()} className="rounded-md border border-border px-4 py-2.5 text-sm disabled:opacity-50">সম্পর্ক যোগ করুন</button>
-          </div>
+          </div> */}
           <div className="flex justify-end gap-2 border-t border-border pt-4">
             <Link to="/dashboard/guardians/list" className="rounded-md border border-border px-4 py-2.5 text-sm">বাতিল</Link>
             <button type="submit" disabled={isSaving} className="rounded-md bg-clay px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{isSaving ? 'সংরক্ষণ হচ্ছে…' : 'সংযোগ সংরক্ষণ করুন'}</button>
