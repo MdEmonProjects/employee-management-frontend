@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SvgIcon from '../components/icons/SvgIcon';
 import SortableTable from '../components/SortableTable';
 import { useGetClassListQuery } from '../features/class/classQuerySlice';
 import { useGetSessionsQuery } from '../features/session/sessionQuerySlice';
-import { useGetUserBySearchQuery } from '../features/user/userQuerySlice';
+import { useGetUserBySearchQuery, useImportStudentsMutation, usePreviewStudentsMutation } from '../features/user/userQuerySlice';
 import { showModal } from '../utils/ModalControlar';
 import convertBijoyToBengali from '../utils/uniconveter';
 
@@ -15,6 +15,14 @@ export default function UserList({ userType = 1 }) {
   const label = userType === 3 ? 'অভিভাবক' : userType === 2 ? 'শিক্ষক/স্টাফ' : 'শিক্ষার্থী';
   const sectionPath = userType === 3 ? 'guardians' : 'staff';
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
+  const [importStudents, { isLoading: isImporting }] = useImportStudentsMutation();
+  const [previewStudents, { isLoading: isPreviewing }] = usePreviewStudentsMutation();
+  const [previewFile, setPreviewFile] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [importMessage, setImportMessage] = useState('');
+  const [importErrors, setImportErrors] = useState([]);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [classId, setClassId] = useState('');
@@ -101,6 +109,84 @@ export default function UserList({ userType = 1 }) {
     setPage(1);
   };
 
+  const downloadTemplate = async () => {
+    setImportMessage('');
+    setImportErrors([]);
+    setIsDownloading(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SERVER_URL}/api/users/student-import/template`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || 'Could not download the template.');
+      }
+      const blob = await response.blob();
+      const signature = new Uint8Array(await blob.slice(0, 4).arrayBuffer());
+      if (signature.length !== 4 || signature[0] !== 0x50 || signature[1] !== 0x4b || signature[2] !== 0x03 || signature[3] !== 0x04) {
+        throw new Error('The server returned an invalid Excel file. Restart the backend and try again.');
+      }
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'student-import-template.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      setImportMessage(error.message || 'Could not download the template.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const uploadTemplate = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    setPreviewFile(null);
+    setPreview(null);
+    setImportMessage('');
+    setImportErrors([]);
+    if (!file.name.toLowerCase().endsWith('.xlsx')) {
+      setImportMessage('Choose the completed .xlsx template.');
+      return;
+    }
+    try {
+      const result = await previewStudents(file).unwrap();
+      setPreviewFile(file);
+      setPreview(result);
+    } catch (error) {
+      setImportMessage(error.data?.message || 'Could not preview the file. Please try again.');
+    }
+  };
+
+  const confirmImport = async () => {
+    if (!previewFile || !preview || preview.errorCount || isImporting) return;
+    setImportMessage('');
+    setImportErrors([]);
+    try {
+      const result = await importStudents(previewFile).unwrap();
+      setPreviewFile(null);
+      setPreview(null);
+      setImportMessage(`${result.inserted} student${result.inserted === 1 ? '' : 's'} added successfully.`);
+      refetch();
+    } catch (error) {
+      setImportMessage(error.data?.message || 'The upload failed. Please try again.');
+      setImportErrors(Array.isArray(error.data?.errors) ? error.data.errors : []);
+      setPreviewFile(null);
+      setPreview(null);
+    }
+  };
+
+  const cancelPreview = () => {
+    setPreviewFile(null);
+    setPreview(null);
+    setImportMessage('');
+    setImportErrors([]);
+  };
+
   const columns = [
     ...(isStudent ? [{
       title: <input type="checkbox" aria-label="এই পাতার সব শিক্ষার্থী নির্বাচন করুন" checked={allVisibleSelected} onChange={toggleVisibleStudents} disabled={!visibleStudentIds.length} className="size-4 accent-clay" />,
@@ -153,6 +239,16 @@ export default function UserList({ userType = 1 }) {
               {/* <p className="text-sm text-muted">{users.length} টি তথ্য পাওয়া গেছে</p> */}
             </div>
           </div>
+          <div className="flex flex-wrap gap-2">
+          {isStudent && <>
+            <button type="button" onClick={downloadTemplate} disabled={isDownloading || isPreviewing || isImporting} className="inline-flex min-h-10 items-center rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-surface-secondary disabled:opacity-50">
+              {isDownloading ? 'Preparing template…' : 'Download Excel template'}
+            </button>
+            <input ref={fileInputRef} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={uploadTemplate} className="sr-only" aria-label="Upload completed student template" />
+            <button type="button" onClick={() => fileInputRef.current?.click()} disabled={isPreviewing || isImporting || isDownloading} className="inline-flex min-h-10 items-center rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-surface-secondary disabled:opacity-50">
+              {isPreviewing ? 'Checking file…' : 'Choose Excel file'}
+            </button>
+          </>}
           <button
             type="button"
             onClick={() => navigate(isStudent ? '/dashboard/academic/classlist' : `/dashboard/${sectionPath}/new`)}
@@ -161,9 +257,51 @@ export default function UserList({ userType = 1 }) {
             <SvgIcon name="TbPlus" size={18} />
             নতুন নিবন্ধন
           </button>
+          </div>
         </header>
 
         <div className="space-y-4 p-4 sm:p-6">
+          {isStudent && <p className="text-sm text-muted">Fill one student per row. Select class, session, and gender from the Excel dropdowns. Choose the file to preview all rows before importing. Up to 500 students per file.</p>}
+          {importMessage && <div role="status" className={`rounded-md border px-4 py-3 text-sm ${importErrors.length || !importMessage.includes('successfully') ? 'border-red-300 text-red-700' : 'border-green-300 text-green-700'}`}>
+            <p>{importMessage}</p>
+            {importErrors.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5">{importErrors.map((item) => <li key={item.row}>Row {item.row}: {item.message}</li>)}</ul>}
+          </div>}
+          {isStudent && preview && <section aria-label="Student import preview" className="space-y-4 rounded-md border border-border bg-surface-secondary p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="text-base font-semibold text-foreground">Review students before import</h2>
+                <p className="text-sm text-muted">{previewFile?.name} · {preview.count} row{preview.count === 1 ? '' : 's'} · {preview.errorCount ? `${preview.errorCount} row${preview.errorCount === 1 ? '' : 's'} need correction` : 'All rows valid. No students have been added yet.'}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={cancelPreview} disabled={isImporting} className="min-h-10 rounded-md border border-border bg-surface px-4 text-sm font-medium text-foreground disabled:opacity-50">Cancel</button>
+                <button type="button" onClick={confirmImport} disabled={isImporting || preview.errorCount > 0 || !preview.count} className="min-h-10 rounded-md bg-clay px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">
+                  {isImporting ? 'Importing students…' : `Import ${preview.count} student${preview.count === 1 ? '' : 's'}`}
+                </button>
+              </div>
+            </div>
+            {preview.errorCount > 0 && <p role="alert" className="text-sm text-red-700">Correct the marked rows in Excel, then choose the file again. No students have been added.</p>}
+            <div className="max-h-[32rem] overflow-auto rounded-md border border-border bg-surface">
+              <table className="min-w-full whitespace-nowrap text-left text-sm">
+                <thead className="sticky top-0 z-10 bg-surface-secondary text-foreground">
+                  <tr>{['Excel row', 'Student Name', 'Gender', 'Father Name', 'Mother Name', 'Session', 'Class', 'Mobile 1', 'Mobile 2', 'Status'].map((heading) => <th key={heading} scope="col" className="border-b border-border px-3 py-2 font-semibold">{heading}</th>)}</tr>
+                </thead>
+                <tbody>
+                  {preview.students.map((student) => <tr key={student.row} className={student.errors.length ? 'bg-red-50' : 'border-t border-border'}>
+                    <td className="px-3 py-2">{student.row}</td>
+                    <td className="px-3 py-2">{student.UserName || '—'}</td>
+                    <td className="px-3 py-2">{student.Gender || '—'}</td>
+                    <td className="px-3 py-2">{student.FatherName || '—'}</td>
+                    <td className="px-3 py-2">{student.MotherName || '—'}</td>
+                    <td className="px-3 py-2">{student.Session || '—'}</td>
+                    <td className="px-3 py-2">{student.Class || '—'}</td>
+                    <td className="px-3 py-2">{student.Mobile1 || '—'}</td>
+                    <td className="px-3 py-2">{student.Mobile2 || '—'}</td>
+                    <td className={`px-3 py-2 ${student.errors.length ? 'text-red-700' : 'text-green-700'}`}>{student.errors.length ? student.errors.join('; ') : 'Ready'}</td>
+                  </tr>)}
+                </tbody>
+              </table>
+            </div>
+          </section>}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <label className="relative block sm:col-span-2 xl:col-span-2">
               <span className="sr-only">Search users</span>

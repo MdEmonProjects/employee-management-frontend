@@ -30,6 +30,23 @@ export const userQuerySlice = createApi({
       invalidatesTags: [{ type: 'UserList', id: 'LIST' }],
     }),
 
+    importStudents: builder.mutation({
+      query: (file) => {
+        const body = new FormData();
+        body.append('file', file);
+        return { url: 'student-import', method: 'POST', body };
+      },
+      invalidatesTags: [{ type: 'UserList', id: 'LIST' }],
+    }),
+
+    previewStudents: builder.mutation({
+      query: (file) => {
+        const body = new FormData();
+        body.append('file', file);
+        return { url: 'student-import/preview', method: 'POST', body };
+      },
+    }),
+
     getUserBySearch: builder.query({
       query: ({ search, ClassID, SessionID, UserTypeID } = {}) => {
         const params = new URLSearchParams();
@@ -77,6 +94,8 @@ export const userQuerySlice = createApi({
 export const {
   useGetSingleUserQuery,
   useCreateUserMutation,
+  useImportStudentsMutation,
+  usePreviewStudentsMutation,
   useGetUserBySearchQuery,
   useUpdateUserMutation,
   usePromoteStudentsMutation,
