@@ -17,6 +17,7 @@ import TimePicker from "../components/TimePicker";
 import { showModal } from "../utils/ModalControlar";
 import convertBijoyToBengali from "../utils/uniconveter";
 import { toast } from 'react-toastify';
+import { useGetEnrolledUserIdsQuery } from "../features/user/userQuerySlice";
 /* ------------------------------------------------------------------ *
  * শিক্ষার্থী সময় সেটিংস
  * ------------------------------------------------------------------ */
@@ -113,6 +114,13 @@ export default function TimeSetting() {
   const [updateTimeSwitch, { isLoading: isUpdating }] = useUpdateTimeSwitchMutation();
   const [deleteTimeSwitch, { isLoading: isDeleting }] = useDeleteTimeSwitchMutation();
   const { data: assignmentOptions } = useGetTimeShiftAssignmentOptionsQuery();
+  const {
+    data: enrolledUserIds = [],
+    isLoading: isEnrollmentLoading,
+    isError: isEnrollmentError,
+    refetch: refetchEnrollments,
+  } = useGetEnrolledUserIdsQuery(undefined, { refetchOnMountOrArgChange: true });
+  const enrolledUsers = new Set(enrolledUserIds);
   const [assignmentUserTypeId, setAssignmentUserTypeId] = useState("0");
   const [assignmentSessionId, setAssignmentSessionId] = useState("");
   const [assignmentClassId, setAssignmentClassId] = useState("");
@@ -251,20 +259,6 @@ export default function TimeSetting() {
         ClassID: Number(assignmentClassId),
       }),
     };
-
-    if (direction === "assign") {
-      const usersChangingShift = availableUsers.filter(
-        (employee) => selected.has(employee.id) && employee.shiftId,
-      ).length;
-      if (
-        usersChangingShift > 0 &&
-        !window.confirm(
-          `নির্বাচিত ${convertBijoyToBengali(usersChangingShift)} জন ব্যবহারকারীর অন্য শিফট রয়েছে। তাদের ${activeShift} শিফটে স্থানান্তর করবেন?`,
-        )
-      ) {
-        return;
-      }
-    }
 
     try {
       if (direction === "assign") await assignTimeShift(payload).unwrap();
@@ -497,10 +491,26 @@ export default function TimeSetting() {
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="font-semibold">👥 শিফটের জন্য ব্যবহারকারী নির্বাচন করুন</h2>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">আগে ব্যবহারকারী নির্বাচন করুন, তারপর শিফট বেছে যোগ করুন।</p>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">একজন ব্যবহারকারীকে একটিমাত্র শিফটে রাখা যাবে। অন্য শিফটে থাকলে আগে সেখান থেকে সরিয়ে নতুন শিফটে যোগ করুন।</p>
           </div>
-          <button type="button" className={btnLine} onClick={() => refetchAssignments()} disabled={isAssignmentLoading || isMovingAssignment}>তালিকা হালনাগাদ</button>
+          <button
+            type="button"
+            className={btnLine}
+            onClick={() => {
+              refetchAssignments();
+              refetchEnrollments();
+            }}
+            disabled={isAssignmentLoading || isEnrollmentLoading || isMovingAssignment}
+          >
+            তালিকা হালনাগাদ
+          </button>
         </div>
+
+        {isEnrollmentError && (
+          <p role="alert" className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">
+            ডিভাইস আপলোডের অবস্থা লোড করা যায়নি। তালিকা হালনাগাদ করুন।
+          </p>
+        )}
 
         <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <label className="text-sm font-medium">
@@ -609,6 +619,9 @@ export default function TimeSetting() {
               title="উপলব্ধ ব্যবহারকারী" note="(শিফটে যোগ করার জন্য)"
               rows={left} picked={selectedLeft} setPicked={setPickL}
               q={qL} setQ={setQL} showShift total={left.length}
+              enrolledUsers={enrolledUsers}
+              enrollmentStatusLoading={isEnrollmentLoading}
+              enrollmentStatusError={isEnrollmentError}
               extra={
                 <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
                   <input type="checkbox" checked={onlyFree} onChange={(e) => setOnlyFree(e.target.checked)} />
@@ -635,6 +648,9 @@ export default function TimeSetting() {
                 title="শিফটে থাকা ব্যবহারকারী" note={"(" + activeShift + " শিফটে আছে)"}
                 rows={right} picked={selectedRight} setPicked={setPickR}
                 q={qR} setQ={setQR} total={right.length}
+                enrolledUsers={enrolledUsers}
+                enrollmentStatusLoading={isEnrollmentLoading}
+                enrollmentStatusError={isEnrollmentError}
               />
             ) : (
               <div className="rounded-lg border border-dashed border-slate-300 px-4 py-10 text-center text-sm text-slate-500 dark:border-slate-700">
@@ -664,7 +680,10 @@ function MoveBtn({ label, icon, disabled, onClick }) {
   );
 }
 
-function Panel({ title, note, rows, picked, setPicked, q, setQ, showShift, total, extra }) {
+function Panel({
+  title, note, rows, picked, setPicked, q, setQ, showShift, total, extra,
+  enrolledUsers, enrollmentStatusLoading, enrollmentStatusError,
+}) {
   const allOn = rows.length > 0 && rows.every((e) => picked.has(e.id));
   const toggle = (id) => {
     const next = new Set(picked);
@@ -680,7 +699,10 @@ function Panel({ title, note, rows, picked, setPicked, q, setQ, showShift, total
     });
     setPicked(next);
   };
-  const cols = ["ক্রমিক", "ব্যবহারকারী আইডি", "কোড", "নাম", "ধরন", ...(showShift ? ["বর্তমান শিফট"] : [])];
+  const cols = [
+    "ক্রমিক", "ব্যবহারকারী আইডি", "কোড", "নাম", "ধরন", "ডিভাইসে আপলোড",
+    ...(showShift ? ["বর্তমান শিফট"] : []),
+  ];
 
   return (
     <div className="min-w-0 overflow-hidden rounded-lg border border-slate-200 p-3 dark:border-slate-700">
@@ -706,6 +728,21 @@ function Panel({ title, note, rows, picked, setPicked, q, setQ, showShift, total
                 <td className={td + " tabular-nums"}>{e.code == null ? "—" : convertBijoyToBengali(e.code)}</td>
                 <td className={td}>{e.name}</td>
                 <td className={td}>{userTypeNames[e.userTypeId] || "—"}</td>
+                <td className={td}>
+                  {enrollmentStatusLoading ? (
+                    <span className="text-slate-500">লোড হচ্ছে...</span>
+                  ) : enrollmentStatusError ? (
+                    <span className="text-slate-500">অবস্থা পাওয়া যায়নি</span>
+                  ) : enrolledUsers.has(e.id) ? (
+                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/40 dark:text-green-300">
+                      আপলোড হয়েছে
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                      আপলোড হয়নি
+                    </span>
+                  )}
+                </td>
                 {showShift && (
                   <td className={td}>
                     {e.shiftName || (
