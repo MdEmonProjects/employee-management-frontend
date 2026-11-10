@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import SvgIcon from '../components/icons/SvgIcon';
-import { FormProvider, useForm } from 'react-hook-form';
+import { FormProvider, useForm, useWatch } from 'react-hook-form';
 import PhoneNumberInput from '../components/PhoneNumberInput';
 import { useParams } from 'react-router-dom';
 import DefaultInput from '../components/DefaultInput';
@@ -8,6 +8,7 @@ import DefaultSelect from '../components/DefaultSelect';
 import { useGetSessionsQuery } from '../features/session/sessionQuerySlice';
 import { useCreateUserMutation } from '../features/user/userQuerySlice';
 import { toast } from 'react-toastify';
+import useUserCodeAvailability from '../hooks/useUserCodeAvailability';
 
 export default function UserEntry() {
   const methods = useForm();
@@ -16,6 +17,9 @@ export default function UserEntry() {
   const { data: sessionList } = useGetSessionsQuery();
   const { classid } = useParams();
   const [createUser, { isLoading }] = useCreateUserMutation();
+  const userCodeStatus = useUserCodeAvailability(
+    useWatch({ control: methods.control, name: 'UserCode' }),
+  );
 
   useEffect(() => {
     if (classid) {
@@ -25,14 +29,19 @@ export default function UserEntry() {
 
   const onSubmit = async (data) => {
     try {
-      await createUser({ ...data, UserTypeID: 1, ClassID: Number(classid) }).unwrap();
-      toast.success('শিক্ষার্থী সফলভাবে নিবন্ধিত হয়েছে।', {
+      const created = await createUser({
+        ...data,
+        UserTypeID: 1,
+        ClassID: Number(classid),
+      }).unwrap();
+      toast.success(`শিক্ষার্থী সফলভাবে নিবন্ধিত হয়েছে। ইউজার কোড: ${created.UserCode}`, {
         progressStyle: {
           background: '#C9724F',
         },
       });
       reset({
         UserName: '',
+        UserCode: '',
         GenderID: '',
         FatherName: '',
         MotherName: '',
@@ -92,6 +101,20 @@ export default function UserEntry() {
                 <div className="grid md:grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-5">
 
                   <DefaultInput label={"নাম"} placeholder={"নাম"} registerKey={"UserName"} />
+                  <div>
+                    <DefaultInput
+                      label="ইউজার কোড"
+                      placeholder="খালি রাখলে স্বয়ংক্রিয়ভাবে তৈরি হবে"
+                      registerKey="UserCode"
+                      type="number"
+                    />
+                    {userCodeStatus.message && (
+                      <p role={userCodeStatus.unavailable || userCodeStatus.isError || !userCodeStatus.isValid ? 'alert' : 'status'}
+                        className={`mt-1 text-xs ${userCodeStatus.unavailable || userCodeStatus.isError || !userCodeStatus.isValid ? 'text-danger' : 'text-muted'}`}>
+                        {userCodeStatus.message}
+                      </p>
+                    )}
+                  </div>
 
                   <DefaultSelect label={"লিঙ্গ"} options={[{ id: 1, value: "ছেলে" }, { id: 2, value: "মহিলা" }]} registerKey={"GenderID"} require={"Gender is Required"} nameField={"value"} valueField={"id"} />
 
@@ -133,7 +156,7 @@ export default function UserEntry() {
 
                   <button
                     type="submit"
-                    disabled={isLoading}
+                    disabled={isLoading || !userCodeStatus.canSubmit}
                     className="w-full rounded-lg bg-clay px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
                   >
                     {isLoading ? 'তৈরি হচ্ছে…' : 'শিক্ষাথী নিবন্ধন করুন'}

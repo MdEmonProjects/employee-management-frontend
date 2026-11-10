@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { FormProvider, useForm, useWatch } from 'react-hook-form';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import DefaultInput from '../components/DefaultInput';
@@ -11,6 +11,7 @@ import {
   useGetSingleUserQuery,
   useUpdateUserMutation,
 } from '../features/user/userQuerySlice';
+import useUserCodeAvailability from '../hooks/useUserCodeAvailability';
 
 const EMPTY_OPTIONS = [];
 
@@ -32,6 +33,7 @@ export default function UserEdit() {
   const methods = useForm({
     defaultValues: {
       UserName: '',
+      UserCode: '',
       FatherName: '',
       MotherName: '',
       Mobile1: '',
@@ -42,11 +44,17 @@ export default function UserEdit() {
     },
   });
   const { handleSubmit, reset } = methods;
+  const userCodeStatus = useUserCodeAvailability(
+    useWatch({ control: methods.control, name: 'UserCode' }),
+    userId,
+    user?.UserCode,
+  );
 
   useEffect(() => {
     if (!user || isClassLoading || isSessionLoading) return;
     reset({
       UserName: user.UserName ?? '',
+      UserCode: user.UserCode == null ? '' : String(user.UserCode),
       FatherName: user.FatherName ?? '',
       MotherName: user.MotherName ?? '',
       Mobile1: user.Mobile1 ?? '',
@@ -60,6 +68,7 @@ export default function UserEdit() {
   const onSubmit = async (formData) => {
     const data = {
       UserName: formData.UserName,
+      ...(formData.UserCode !== '' && { UserCode: formData.UserCode }),
       FatherName: formData.FatherName,
       MotherName: formData.MotherName,
       Mobile1: formData.Mobile1,
@@ -108,7 +117,7 @@ export default function UserEdit() {
             <h1 className="text-lg font-semibold text-foreground">{label} তথ্য সম্পাদনা</h1>
             <p className="mt-1 text-sm text-muted">ব্যক্তিগত তথ্য</p>
           </div>
-          <p className="text-sm text-muted">ইউজার কোড: {user.UserCode ?? '—'}</p>
+          <p className="text-sm text-muted">বর্তমান ইউজার কোড: {user.UserCode ?? '—'}</p>
         </header>
 
         <div className="space-y-4 p-4 sm:p-6">
@@ -116,6 +125,20 @@ export default function UserEdit() {
             <form onSubmit={handleSubmit(onSubmit)}>
               <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 <DefaultInput label="নাম" placeholder="নাম" registerKey="UserName" />
+                <div>
+                  <DefaultInput
+                    label="ইউজার কোড"
+                    placeholder="খালি রাখলে বর্তমান কোড অপরিবর্তিত থাকবে"
+                    registerKey="UserCode"
+                    type="number"
+                  />
+                  {userCodeStatus.message && (
+                    <p role={userCodeStatus.unavailable || userCodeStatus.isError || !userCodeStatus.isValid ? 'alert' : 'status'}
+                      className={`mt-1 text-xs ${userCodeStatus.unavailable || userCodeStatus.isError || !userCodeStatus.isValid ? 'text-danger' : 'text-muted'}`}>
+                      {userCodeStatus.message}
+                    </p>
+                  )}
+                </div>
                 <DefaultSelect
                   label="লিঙ্গ"
                   options={[{ id: 1, value: 'ছেলে' }, { id: 2, value: 'মহিলা' }]}
@@ -174,7 +197,7 @@ export default function UserEdit() {
                 </button>
                 <button
                   type="submit"
-                  disabled={isSaving}
+                  disabled={isSaving || !userCodeStatus.canSubmit}
                   className="rounded-lg bg-clay px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
                 >
                   {isSaving ? 'আপডেট হচ্ছে…' : 'তথ্য আপডেট করুন'}

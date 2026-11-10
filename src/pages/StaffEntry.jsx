@@ -1,4 +1,4 @@
-import { FormProvider, useForm } from 'react-hook-form';
+import { FormProvider, useForm, useWatch } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import DefaultInput from '../components/DefaultInput';
@@ -6,6 +6,7 @@ import DefaultSelect from '../components/DefaultSelect';
 import PhoneNumberInput from '../components/PhoneNumberInput';
 import SvgIcon from '../components/icons/SvgIcon';
 import { useCreateUserMutation } from '../features/user/userQuerySlice';
+import useUserCodeAvailability from '../hooks/useUserCodeAvailability';
 
 export default function StaffEntry({ userType = 2 }) {
   const isGuardian = userType === 3;
@@ -18,11 +19,14 @@ export default function StaffEntry({ userType = 2 }) {
     },
   });
   const [createUser, { isLoading }] = useCreateUserMutation();
+  const userCodeStatus = useUserCodeAvailability(
+    useWatch({ control: methods.control, name: 'UserCode' }),
+  );
 
   const onSubmit = async (values) => {
     try {
       const created = await createUser({ ...values, UserTypeID: userType }).unwrap();
-      toast.success(`${label} সফলভাবে নিবন্ধিত হয়েছে।`);
+      toast.success(`${label} সফলভাবে নিবন্ধিত হয়েছে। ইউজার কোড: ${created.UserCode}`);
       navigate(isGuardian ? `/dashboard/guardians/${created.insertedUserID}/students` : listPath);
     } catch (error) {
       toast.error(error?.data?.message || `${label} নিবন্ধন করা যায়নি।`);
@@ -54,6 +58,20 @@ export default function StaffEntry({ userType = 2 }) {
           <FormProvider {...methods}>
             <form onSubmit={methods.handleSubmit(onSubmit)}>
               <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                <div>
+                  <DefaultInput
+                    label="ইউজার কোড"
+                    placeholder="খালি রাখলে স্বয়ংক্রিয়ভাবে তৈরি হবে"
+                    registerKey="UserCode"
+                    type="number"
+                  />
+                  {userCodeStatus.message && (
+                    <p role={userCodeStatus.unavailable || userCodeStatus.isError || !userCodeStatus.isValid ? 'alert' : 'status'}
+                      className={`mt-1 text-xs ${userCodeStatus.unavailable || userCodeStatus.isError || !userCodeStatus.isValid ? 'text-danger' : 'text-muted'}`}>
+                      {userCodeStatus.message}
+                    </p>
+                  )}
+                </div>
                 <DefaultInput label="নাম" placeholder="নাম" registerKey="UserName" />
                 <DefaultSelect
                   label="লিঙ্গ"
@@ -70,7 +88,7 @@ export default function StaffEntry({ userType = 2 }) {
               </div>
               <div className="mt-6 flex justify-end gap-3 border-t border-border pt-4">
                 <Link to={listPath} className="rounded-lg border border-border px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-surface-secondary">বাতিল</Link>
-                <button type="submit" disabled={isLoading} className="rounded-lg bg-clay px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">
+                <button type="submit" disabled={isLoading || !userCodeStatus.canSubmit} className="rounded-lg bg-clay px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">
                   {isLoading ? 'তৈরি হচ্ছে…' : 'নিবন্ধন করুন'}
                 </button>
               </div>

@@ -15,7 +15,7 @@ const DefaultInput = ({
   unicode = false,
   labelPosition = 'top',
   validate,
-  defaultValue = '',
+  defaultValue,
   showError = false,
   isRtl = false,
 }) => {

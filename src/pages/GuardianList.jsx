@@ -2,18 +2,36 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useGetGuardiansQuery, useRemoveGuardianLinkMutation } from '../features/guardian/guardianQuerySlice';
+import { useGetEnrolledUserIdsQuery } from '../features/user/userQuerySlice';
+
+const GUARDIAN_DEVICE_ID_BASE = 1_000_000_000;
 
 export default function GuardianList() {
   const [search, setSearch] = useState('');
-  const { data: guardians = [], isLoading, isError } = useGetGuardiansQuery();
+  const [uploadStatus, setUploadStatus] = useState('all');
+  const { data: guardians = [], isLoading, isError, refetch } = useGetGuardiansQuery();
+  const {
+    data: enrolledUserIds = [],
+    isLoading: isEnrollmentLoading,
+    isError: isEnrollmentError,
+    refetch: refetchEnrollments,
+  } = useGetEnrolledUserIdsQuery(undefined, { refetchOnMountOrArgChange: true });
   const [removeLink, { isLoading: isRemoving }] = useRemoveGuardianLinkMutation();
-  const filtered = useMemo(() => guardians.filter((guardian) => {
+  const enrolledUsers = useMemo(() => new Set(enrolledUserIds), [enrolledUserIds]);
+  const filtered = useMemo(() => guardians.map((guardian) => {
     const term = search.trim().toLowerCase();
-    if (!term) return true;
-    return [guardian.UserName, guardian.UserCode, guardian.Mobile1,
-      ...guardian.Students.flatMap((student) => [student.StudentName, student.StudentCode])]
+    const uploadedStudents = guardian.Students.filter((student) => {
+      const uploaded = enrolledUsers.has(GUARDIAN_DEVICE_ID_BASE + student.ID);
+      return uploadStatus === 'all' || uploaded === (uploadStatus === 'uploaded');
+    });
+    const guardianMatches = [guardian.UserName, guardian.UserCode, guardian.Mobile1]
       .some((value) => String(value ?? '').toLowerCase().includes(term));
-  }), [guardians, search]);
+    const visibleStudents = !term || guardianMatches
+      ? uploadedStudents
+      : uploadedStudents.filter((student) => [student.StudentName, student.StudentCode]
+        .some((value) => String(value ?? '').toLowerCase().includes(term)));
+    return visibleStudents.length > 0 ? { ...guardian, visibleStudents } : null;
+  }).filter(Boolean), [enrolledUsers, guardians, search, uploadStatus]);
 
   const onRemove = async (link) => {
     if (!window.confirm(`${link.StudentName || link.StudentCode} এর অভিভাবক সংযোগ মুছবেন?`)) return;
@@ -40,9 +58,20 @@ export default function GuardianList() {
           </div>
         </header>
         <div className="space-y-4 p-4 sm:p-6">
-          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="অভিভাবক বা শিক্ষার্থী খুঁজুন" className="h-10 w-full max-w-md rounded-md border border-border px-3 text-sm" />
-          {isLoading ? <p className="py-8 text-center text-muted">তালিকা লোড হচ্ছে…</p>
-            : isError ? <p className="py-8 text-center text-red-600">তালিকা আনা যায়নি।</p>
+          <div className="flex flex-wrap gap-3">
+            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="অভিভাবক বা শিক্ষার্থী খুঁজুন" className="h-10 w-full max-w-md rounded-md border border-border px-3 text-sm" />
+            <label>
+              <span className="sr-only">ডিভাইস আপলোডের অবস্থা</span>
+              <select value={uploadStatus} onChange={(event) => setUploadStatus(event.target.value)} className="h-10 rounded-md border border-border bg-surface px-3 text-sm">
+                <option value="all">সব আপলোডের অবস্থা</option>
+                <option value="uploaded">ডিভাইসে আপলোড হয়েছে</option>
+                <option value="not-uploaded">ডিভাইসে আপলোড হয়নি</option>
+              </select>
+            </label>
+            <button type="button" onClick={() => { refetch(); refetchEnrollments(); }} className="h-10 rounded-md border border-border px-3 text-sm">রিফ্রেশ</button>
+          </div>
+          {isLoading || isEnrollmentLoading ? <p className="py-8 text-center text-muted">তালিকা লোড হচ্ছে…</p>
+            : isError || isEnrollmentError ? <p className="py-8 text-center text-red-600">তালিকা আনা যায়নি।</p>
               : filtered.length === 0 ? <p className="py-8 text-center text-muted">কোনো সংযুক্ত অভিভাবক পাওয়া যায়নি।</p>
                 : filtered.map((guardian) => (
                   <article key={guardian.GuardianUserID} className="rounded-md border border-border">
@@ -51,7 +80,7 @@ export default function GuardianList() {
                         <h2 className="font-semibold text-foreground">{guardian.UserName || `#${guardian.UserCode || guardian.GuardianUserID}`}
                           {guardian.UserTypeID === 2 && <span className="ml-2 rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">শিক্ষক/স্টাফ</span>}
                         </h2>
-                        <p className="text-xs text-muted">কোড: {guardian.UserCode ?? '—'} · মোবাইল: {guardian.Mobile1 || '—'} · {guardian.Students.length} জন শিক্ষার্থী</p>
+                        <p className="text-xs text-muted">কোড: {guardian.UserCode ?? '—'} · মোবাইল: {guardian.Mobile1 || '—'} · {guardian.visibleStudents.length} জন শিক্ষার্থী</p>
                       </div>
                       <div className="flex gap-2">
                         <Link to={`/dashboard/guardians/${guardian.GuardianUserID}/students`} className="rounded-md border border-border px-3 py-2 text-sm">শিক্ষার্থী যুক্ত/সম্পাদনা</Link>
@@ -60,12 +89,15 @@ export default function GuardianList() {
                     </div>
                     <div className="overflow-x-auto">
                       <table className="w-full min-w-[550px] text-left text-sm">
-                        <thead><tr className="text-muted"><th className="px-4 py-2">শিক্ষার্থী</th><th className="px-4 py-2">সম্পর্ক</th><th className="px-4 py-2">অভিভাবকের কার্ড</th><th className="px-4 py-2" /></tr></thead>
-                        <tbody>{guardian.Students.map((student) => (
+                        <thead><tr className="text-muted"><th className="px-4 py-2">শিক্ষার্থী</th><th className="px-4 py-2">সম্পর্ক</th><th className="px-4 py-2">অভিভাবকের কার্ড</th><th className="px-4 py-2">ডিভাইস আপলোড</th><th className="px-4 py-2" /></tr></thead>
+                        <tbody>{guardian.visibleStudents.map((student) => (
                           <tr key={student.ID} className="border-t border-border">
                             <td className="px-4 py-3">{student.StudentName || '—'} ({student.StudentCode ?? student.StudentUserID})</td>
                             <td className="px-4 py-3">{student.RelationName || '—'}</td>
                             <td className="px-4 py-3">{student.CardNumber || '—'}</td>
+                            <td className="px-4 py-3">{enrolledUsers.has(GUARDIAN_DEVICE_ID_BASE + student.ID)
+                              ? <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">আপলোড হয়েছে</span>
+                              : <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">আপলোড হয়নি</span>}</td>
                             <td className="px-4 py-3 text-right"><button type="button" disabled={isRemoving} onClick={() => onRemove(student)} className="text-red-600 disabled:opacity-50">মুছুন</button></td>
                           </tr>
                         ))}</tbody>

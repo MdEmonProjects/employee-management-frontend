@@ -4,11 +4,12 @@ import SvgIcon from '../components/icons/SvgIcon';
 import SortableTable from '../components/SortableTable';
 import { useGetClassListQuery } from '../features/class/classQuerySlice';
 import { useGetSessionsQuery } from '../features/session/sessionQuerySlice';
-import { useGetUserBySearchQuery, useImportStudentsMutation, usePreviewStudentsMutation } from '../features/user/userQuerySlice';
+import { useGetEnrolledUserIdsQuery, useGetUserBySearchQuery, useImportStudentsMutation, usePreviewStudentsMutation } from '../features/user/userQuerySlice';
 import { showModal } from '../utils/ModalControlar';
 import convertBijoyToBengali from '../utils/uniconveter';
 
 const selectClassName = 'h-10 w-full rounded-md border border-border bg-surface px-3 text-sm text-foreground outline-none focus:border-accent';
+const EMPTY_USERS = [];
 
 export default function UserList({ userType = 1 }) {
   const isStudent = userType === 1;
@@ -27,6 +28,7 @@ export default function UserList({ userType = 1 }) {
   const [search, setSearch] = useState('');
   const [classId, setClassId] = useState('');
   const [sessionId, setSessionId] = useState('');
+  const [uploadStatus, setUploadStatus] = useState('all');
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState('25');
   const [selectedStudentIds, setSelectedStudentIds] = useState(() => new Set());
@@ -36,9 +38,15 @@ export default function UserList({ userType = 1 }) {
       UserTypeID: userType,
       ...(isStudent && { ClassID: classId, SessionID: sessionId }),
     });
+  const {
+    data: enrolledUserIds = [],
+    isLoading: isEnrollmentLoading,
+    isError: isEnrollmentError,
+    refetch: refetchEnrollments,
+  } = useGetEnrolledUserIdsQuery(undefined, { refetchOnMountOrArgChange: true });
   const { data: classList = [] } = useGetClassListQuery(undefined, { skip: !isStudent });
   const { data: sessionList = [] } = useGetSessionsQuery(undefined, { skip: !isStudent });
-  const users = Array.isArray(data) ? data : [];
+  const users = Array.isArray(data) ? data : EMPTY_USERS;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -69,15 +77,22 @@ export default function UserList({ userType = 1 }) {
     () => new Map(sessionList.map((item) => [String(item.SessionID), item.SessionName || item.SessionEngName])),
     [sessionList],
   );
-  const pageSize = rowsPerPage === 'all' ? Math.max(1, users.length) : Number(rowsPerPage);
-  const pageCount = Math.max(1, Math.ceil(users.length / pageSize));
+  const enrolledUsers = useMemo(() => new Set(enrolledUserIds), [enrolledUserIds]);
+  const filteredUsers = useMemo(
+    () => uploadStatus === 'all'
+      ? users
+      : users.filter((user) => enrolledUsers.has(user.UserID) === (uploadStatus === 'uploaded')),
+    [enrolledUsers, uploadStatus, users],
+  );
+  const pageSize = rowsPerPage === 'all' ? Math.max(1, filteredUsers.length) : Number(rowsPerPage);
+  const pageCount = Math.max(1, Math.ceil(filteredUsers.length / pageSize));
   const currentPage = Math.min(page, pageCount);
-  const visibleUsers = users.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const visibleUsers = filteredUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const visibleStudentIds = visibleUsers.map((user) => user.UserID);
   const allVisibleSelected = visibleStudentIds.length > 0 &&
     visibleStudentIds.every((id) => selectedStudentIds.has(id));
-  const firstRecord = users.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
-  const lastRecord = Math.min(currentPage * pageSize, users.length);
+  const firstRecord = filteredUsers.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const lastRecord = Math.min(currentPage * pageSize, filteredUsers.length);
 
   const toggleStudent = (id) => setSelectedStudentIds((current) => {
     const next = new Set(current);
@@ -106,6 +121,7 @@ export default function UserList({ userType = 1 }) {
     setSearch('');
     setClassId('');
     setSessionId('');
+    setUploadStatus('all');
     setPage(1);
   };
 
@@ -198,6 +214,12 @@ export default function UserList({ userType = 1 }) {
     { title: 'Mother', render: (row) => row.MotherName || '—' },
     { title: 'Mobile 1', render: (row) => row.Mobile1 || '—' },
     { title: 'Mobile 2', render: (row) => row.Mobile2 || '—' },
+    {
+      title: 'ডিভাইস আপলোড',
+      render: (row) => enrolledUsers.has(row.UserID)
+        ? <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">আপলোড হয়েছে</span>
+        : <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">আপলোড হয়নি</span>,
+    },
     ...(isStudent ? [
       { title: 'Session', render: (row) => sessionNames.get(String(row.SessionID)) || '—' },
       { title: 'Class', render: (row) => classNames.get(String(row.ClassID)) || '—' },
@@ -302,7 +324,7 @@ export default function UserList({ userType = 1 }) {
               </table>
             </div>
           </section>}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
             <label className="relative block sm:col-span-2 xl:col-span-2">
               <span className="sr-only">Search users</span>
               <svg aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -334,13 +356,21 @@ export default function UserList({ userType = 1 }) {
                 ))}
               </select>
             </label>}
+            <label>
+              <span className="sr-only">ডিভাইস আপলোডের অবস্থা</span>
+              <select value={uploadStatus} onChange={(event) => { setUploadStatus(event.target.value); setPage(1); }} className={selectClassName}>
+                <option value="all">সব আপলোডের অবস্থা</option>
+                <option value="uploaded">ডিভাইসে আপলোড হয়েছে</option>
+                <option value="not-uploaded">ডিভাইসে আপলোড হয়নি</option>
+              </select>
+            </label>
           </div>
 
           <div className="flex min-h-9 items-center justify-between gap-3 text-sm text-muted">
-            <span aria-live="polite">{isFetching && !isLoading ? 'Updating results…' : `${users.length} records`}</span>
+            <span aria-live="polite">{isFetching && !isLoading ? 'Updating results…' : `${filteredUsers.length} records`}</span>
             <div className="flex items-center gap-3">
               <button type="button" onClick={resetFilters} className="hover:text-foreground">Clear filters</button>
-              <button type="button" onClick={() => refetch()} aria-label="Refresh users" title="Refresh users" className="inline-flex size-9 items-center justify-center rounded-md border border-border text-foreground hover:bg-surface-secondary">
+              <button type="button" onClick={() => { refetch(); refetchEnrollments(); }} aria-label="Refresh users" title="Refresh users" className="inline-flex size-9 items-center justify-center rounded-md border border-border text-foreground hover:bg-surface-secondary">
                 <svg aria-hidden="true" className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 7v5h-5" /><path d="M4 17v-5h5" /><path d="M5.6 9a7 7 0 0 1 11.6-2L20 12M4 12l2.8 5a7 7 0 0 0 11.6-2" /></svg>
               </button>
             </div>
@@ -361,9 +391,9 @@ export default function UserList({ userType = 1 }) {
             </div>
           )}
 
-          {isLoading || (isFetching && !data) ? (
+          {isLoading || isEnrollmentLoading || (isFetching && !data) ? (
             <div className="rounded-md border border-border px-3 py-10 text-center text-sm text-muted">Loading users…</div>
-          ) : isError ? (
+          ) : isError || isEnrollmentError ? (
             <div className="rounded-md border border-border px-3 py-10 text-center text-sm text-danger">Could not load users. Check the connection and try again.</div>
           ) : visibleUsers.length === 0 ? (
             <div className="rounded-md border border-border px-3 py-10 text-center text-sm text-muted">No users match these filters.</div>
@@ -372,7 +402,7 @@ export default function UserList({ userType = 1 }) {
           )}
 
           <footer className="flex flex-col gap-3 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
-            <p>Showing {firstRecord}–{lastRecord} of {users.length}</p>
+            <p>Showing {firstRecord}–{lastRecord} of {filteredUsers.length}</p>
             <div className="flex items-center gap-2 self-end sm:self-auto">
               <label className="flex items-center gap-2 whitespace-nowrap">প্রতি পাতায়
                 <select value={rowsPerPage} onChange={(event) => { setRowsPerPage(event.target.value); setPage(1); }} className="h-9 rounded-md border border-border bg-surface px-2 text-foreground">

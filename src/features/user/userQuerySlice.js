@@ -21,6 +21,14 @@ export const userQuerySlice = createApi({
       providesTags: (result, error, userId) => [{ type: 'UserList', id: userId }],
     }),
 
+    checkUserCodeAvailability: builder.query({
+      query: ({ userCode, excludeUserID }) => {
+        const params = new URLSearchParams({ userCode: String(userCode) });
+        if (excludeUserID) params.append('excludeUserID', String(excludeUserID));
+        return `check_user_code?${params.toString()}`;
+      },
+    }),
+
     createUser: builder.mutation({
       query: (data) => ({
         url: 'insert_user_info',
@@ -67,6 +75,10 @@ export const userQuerySlice = createApi({
           : [{ type: 'UserList', id: 'LIST' }],
     }),
 
+    getEnrolledUserIds: builder.query({
+      query: () => `${API_URL}/api/enrollments`,
+    }),
+
     updateUser: builder.mutation({
       query: ({ id, data }) => ({
         url: `update_user_info/${id}`,
@@ -93,10 +105,12 @@ export const userQuerySlice = createApi({
 
 export const {
   useGetSingleUserQuery,
+  useCheckUserCodeAvailabilityQuery,
   useCreateUserMutation,
   useImportStudentsMutation,
   usePreviewStudentsMutation,
   useGetUserBySearchQuery,
+  useGetEnrolledUserIdsQuery,
   useUpdateUserMutation,
   usePromoteStudentsMutation,
 } = userQuerySlice;
