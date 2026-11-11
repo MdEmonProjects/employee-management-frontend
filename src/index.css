@@ -62,7 +62,8 @@
   /* --font-sans: 'Inter', system-ui, sans-serif; */
   --font-serif: 'Source Serif 4', serif;
   --color-surface: #FEFEFC;
-  --color-clay: #C9724F;
+  /* --color-clay: #C9724F; */
+  --color-clay: #007af7;
   --color-clay-dark: #B15E3D;
   --color-line: #E5E5E1;
 

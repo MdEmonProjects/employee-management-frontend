@@ -27,19 +27,20 @@ export const menuData = [
         subMenu: false,
       },
       {
-        id: '22',
-        name: 'ক্লাস গ্রুপ',
-        route: 'classlist',
-        icon: '',
-        subMenu: false,
-      },
-      {
         id: '23',
         name: 'শিক্ষাবর্ষ',
         route: 'sessionlist',
         icon: '',
         subMenu: false,
+      },
+      {
+        id: '22',
+        name: 'ক্লাস গ্রুপ',
+        route: 'classlist',
+        icon: '',
+        subMenu: false,
       }
+      
     ],
   },
   {

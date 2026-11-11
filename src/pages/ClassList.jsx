@@ -54,12 +54,12 @@ export default function ClassList() {
       render: (row, index) => <p className="text-sm">{index + 1}</p>,
     },
     {
-      title: "মারহালা",
+      title: "ক্লাস/মারহালা",
       field: 'ClassName',
       hozAlign: 'center',
     },
     {
-      title: "মারহালা ইংরেজি",
+      title: "ক্লাস/মারহালা ইংরেজি",
       field: 'EnglishClass'
     },
     {
@@ -71,10 +71,10 @@ export default function ClassList() {
             onClick={() => openClassEditModal(row.ClassID)}
             className="rounded-full border border-clay px-4 py-2 text-[15px] font-medium text-clay hover:bg-brand-50"
           >
-            সম্পাদনা
+            ক্লাস/মারহালা এডিট
           </button>
           <NavLink to={`/dashboard/academic/user_entry/${row.ClassID}`} className="button--primary rounded-full bg-clay border-border px-5 py-2 text-[17px] font-medium text-white cursor-pointer">
-            নিবন্ধন
+            নতুন শিক্ষার্থী যুক্ত
           </NavLink>
           {row.hasStudents ? (
             <span className="self-center text-sm text-muted" title="এই ক্লাসে শিক্ষার্থী আছে, তাই মুছে ফেলা যাবে না।">
@@ -105,7 +105,7 @@ export default function ClassList() {
         <svg aria-hidden="true" className="size-4 shrink-0 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="m9 18 6-6-6-6" />
         </svg>
-        <span aria-current="page" className="truncate font-medium text-foreground">ক্লাস গ্রুপ নিবন্ধন</span>
+        <span aria-current="page" className="truncate font-medium text-foreground">ক্লাস/মারহালা যুক্ত করুন</span>
       </nav>
 
       <section className="overflow-hidden rounded-md border border-border bg-surface">
@@ -115,13 +115,13 @@ export default function ClassList() {
               <SvgIcon name="UserList" size={22} />
             </span>
             <div className="min-w-0">
-              <h1 className="truncate text-lg font-semibold text-foreground">ক্লাস গ্রুপ নিবন্ধন</h1>
-              <p className="text-sm text-muted">ক্লাস গ্রুপ তালিকা</p>
+              <h1 className="truncate text-lg font-semibold text-foreground">ক্লাস ও শিক্ষার্থী নিবন্ধন</h1>
+              <p className="text-sm text-muted">ক্লাস তালিকা</p>
             </div>
           </div>
           <button type="button" className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-cta px-4 py-2 text-sm font-medium text-accent-foreground hover:bg-cta-hover cursor-pointer" onClick={openClassEntryModal}>
             <SvgIcon name="TbPlus" size={18} />
-            নতুন ক্লাস গ্রুপ নিবন্ধন
+            নতুন ক্লাস নিবন্ধন
           </button>
         </header>
 
