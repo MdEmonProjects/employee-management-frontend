@@ -9,6 +9,8 @@ import { toast } from 'react-toastify';
 const isActiveSession = (session) =>
   Number(session.SessionStatus) === 1 && Number(session.SessionAction) === 1;
 
+const sessionLabel = (session) => session.SessionName || session.SessionEngName || `#${session.SessionID}`;
+
 export default function SessionList() {
   const [search, setSearch] = useState('');
   const [activatingId, setActivatingId] = useState(null);
@@ -20,21 +22,18 @@ export default function SessionList() {
   const activeSession = sessions.find(isActiveSession);
 
   const onActivate = async (session) => {
-    const name = session.SessionName || session.SessionEngName || `#${session.SessionID}`;
-    const previous = activeSession && (
-      activeSession.SessionName || activeSession.SessionEngName || `#${activeSession.SessionID}`
-    );
-    const message = previous
-      ? `“${name}” শিক্ষাবর্ষ সক্রিয় করবেন? “${previous}” নিষ্ক্রিয় হবে।`
-      : `“${name}” শিক্ষাবর্ষ সক্রিয় করবেন?`;
+    const name = sessionLabel(session);
+    const message = activeSession
+      ? `“${name}”-কে চলতি শিক্ষাবর্ষ করবেন? এখন চলতি আছে “${sessionLabel(activeSession)}”। পুরনো শিক্ষাবর্ষের তথ্য আগের মতোই ব্যবহার করা যাবে।`
+      : `“${name}”-কে চলতি শিক্ষাবর্ষ করবেন?`;
     if (!window.confirm(message)) return;
 
     setActivatingId(session.SessionID);
     try {
       await updateSessionStatus({ id: session.SessionID, SessionStatus: 1 }).unwrap();
-      toast.success('শিক্ষাবর্ষ সক্রিয় করা হয়েছে।');
+      toast.success('চলতি শিক্ষাবর্ষ পরিবর্তন করা হয়েছে।');
     } catch (error) {
-      toast.error(error?.data?.message || error?.data?.error || 'শিক্ষাবর্ষ সক্রিয় করা যায়নি।');
+      toast.error(error?.data?.message || error?.data?.error || 'চলতি শিক্ষাবর্ষ পরিবর্তন করা যায়নি।');
     } finally {
       setActivatingId(null);
     }
@@ -59,12 +58,12 @@ export default function SessionList() {
     { title: 'ইংরেজি নাম', field: 'SessionEngName' },
     { title: 'আরবি নাম', field: 'SessionAraName' },
     {
-      title: 'অবস্থা',
-      render: (row) => (
-        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${isActiveSession(row) ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
-          {isActiveSession(row) ? 'সক্রিয়' : 'নিষ্ক্রিয়'}
-        </span>
-      ),
+      title: 'চলতি শিক্ষাবর্ষ',
+      render: (row) => (isActiveSession(row) ? (
+        <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">চলতি</span>
+      ) : (
+        <span className="text-xs text-muted">—</span>
+      )),
     },
     {
       title: 'অ্যাকশন',
@@ -84,7 +83,7 @@ export default function SessionList() {
               disabled={isUpdatingStatus}
               className="rounded-full bg-clay px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {activatingId === row.SessionID ? 'সক্রিয় করা হচ্ছে...' : 'সক্রিয় করুন'}
+              {activatingId === row.SessionID ? 'পরিবর্তন হচ্ছে...' : 'চলতি শিক্ষাবর্ষ করুন'}
             </button>
           )}
         </div>
@@ -108,7 +107,7 @@ export default function SessionList() {
             </span>
             <div className="min-w-0">
               <h1 className="text-lg font-semibold text-foreground">শিক্ষাবর্ষ ব্যবস্থাপনা</h1>
-              <p className="text-sm text-muted">শিক্ষাবর্ষ তৈরি, সক্রিয় ও সম্পাদনা করুন</p>
+              <p className="text-sm text-muted">শিক্ষাবর্ষ তৈরি, সম্পাদনা ও চলতি শিক্ষাবর্ষ নির্ধারণ করুন</p>
             </div>
           </div>
           <button
@@ -122,6 +121,12 @@ export default function SessionList() {
         </header>
 
         <div className="space-y-4 p-4 sm:p-6">
+          <p className="rounded-md bg-brand-50 px-3 py-2 text-sm text-foreground">
+            {activeSession
+              ? <>চলতি শিক্ষাবর্ষ: <strong>{sessionLabel(activeSession)}</strong>। </>
+              : 'কোনো চলতি শিক্ষাবর্ষ নির্ধারণ করা নেই। '}
+            নতুন শিক্ষার্থী নিবন্ধনে চলতি শিক্ষাবর্ষ আগে থেকে বাছাই থাকে। যেকোনো শিক্ষাবর্ষে কাজ করা যায়।
+          </p>
           <label className="relative block w-full sm:max-w-sm">
             <span className="sr-only">শিক্ষাবর্ষ অনুসন্ধান</span>
             <svg aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

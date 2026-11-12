@@ -40,7 +40,7 @@ export const menuData = [
         icon: '',
         subMenu: false,
       }
-      
+
     ],
   },
   {
@@ -69,7 +69,7 @@ export const menuData = [
     route: 'timesetting',
     icon: 'Dashboard',
     subMenu: [
-    
+
       {
         id: '41',
         name: 'সিফটের তালিকা',
@@ -84,7 +84,7 @@ export const menuData = [
         icon: '',
         subMenu: false,
       },
-        {
+      {
         id: '40',
         name: 'সময় সেটিংস',
         route: '',
@@ -93,6 +93,17 @@ export const menuData = [
       }
     ],
 
+  },
+  {
+    id: '8',
+    name: 'রিপোর্ট',
+    route: 'reports',
+    icon: 'FiFileText',
+    subMenu: [
+      { id: '81', name: 'দৈনিক অনুপস্থিতি', route: 'absent', icon: '', subMenu: false },
+      { id: '82', name: 'মাসিক হাজিরা রেজিস্টার', route: 'monthly', icon: '', subMenu: false },
+      { id: '83', name: 'উপস্থিতির হার', route: 'percentage', icon: '', subMenu: false },
+    ],
   },
   {
     id: '3',

@@ -12,9 +12,20 @@ import useUserCodeAvailability from '../hooks/useUserCodeAvailability';
 
 export default function UserEntry() {
   const methods = useForm();
-  const { handleSubmit, reset, setValue } = methods;
+  const { handleSubmit, reset, setValue, getValues } = methods;
 
   const { data: sessionList } = useGetSessionsQuery();
+  const activeSession = sessionList?.find(
+    (session) => Number(session.SessionStatus) === 1 && Number(session.SessionAction) === 1,
+  );
+  const activeSessionId = activeSession ? String(activeSession.SessionID) : '';
+
+  // Preselect the active session once the list loads, without overriding a manual choice.
+  useEffect(() => {
+    if (activeSessionId && !getValues('SessionID')) {
+      setValue('SessionID', activeSessionId);
+    }
+  }, [activeSessionId, getValues, setValue]);
   const { classid } = useParams();
   const [createUser, { isLoading }] = useCreateUserMutation();
   const userCodeStatus = useUserCodeAvailability(
@@ -45,7 +56,7 @@ export default function UserEntry() {
         GenderID: '',
         FatherName: '',
         MotherName: '',
-        SessionID: '',
+        SessionID: activeSessionId,
         Mobile1: '',
         Mobile2: '',
         ClassID: classid ?? '',

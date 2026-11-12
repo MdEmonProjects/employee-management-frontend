@@ -21,6 +21,9 @@ import InstituteInfo from './pages/InstituteInfo';
 import StaffEntry from './pages/StaffEntry';
 import GuardianList from './pages/GuardianList';
 import GuardianLinks from './pages/GuardianLinks';
+import AbsentReport from './pages/reports/AbsentReport';
+import MonthlyRegister from './pages/reports/MonthlyRegister';
+import AttendancePercentage from './pages/reports/AttendancePercentage';
 export default function App() {
   return (
     <BrowserRouter>
@@ -37,6 +40,12 @@ export default function App() {
           <Route index element={<Dashboard />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="attendance" element={<Attendance />} />
+          <Route path="reports">
+            <Route index element={<Navigate to="absent" replace />} />
+            <Route path="absent" element={<AbsentReport />} />
+            <Route path="monthly" element={<MonthlyRegister />} />
+            <Route path="percentage" element={<AttendancePercentage />} />
+          </Route>
 
           <Route path="academic">
             <Route path="userlist" element={<UserList userType={1} />} />
