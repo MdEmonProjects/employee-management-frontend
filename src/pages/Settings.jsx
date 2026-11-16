@@ -22,7 +22,7 @@ export default function Settings() {
                             <p className="text-center text-[16px]">প্রতিষ্ঠানের তথ্য</p>
                         </Link>
                     </div>
-                    <div className="card bg-[#ffffff80] border border-[#0b0b0b1a] rounded-[5px] p-4">
+                    {/* <div className="card bg-[#ffffff80] border border-[#0b0b0b1a] rounded-[5px] p-4">
                         <Link to={"/dashboard/departments"}>
                             <div className="icon mb-2 text-[#0b0b0b] text-center flex align-center justify-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" width={40} height={40} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1} strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-building-cog">
@@ -87,7 +87,7 @@ export default function Settings() {
                             <SvgIcon name={"FaEye"} />
                         </div>
                         <h3 className="text-center">Departments</h3>
-                    </div>
+                    </div> */}
 
                 </div>
             </div>
