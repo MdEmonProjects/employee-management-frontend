@@ -24,11 +24,23 @@ import GuardianLinks from './pages/GuardianLinks';
 import AbsentReport from './pages/reports/AbsentReport';
 import MonthlyRegister from './pages/reports/MonthlyRegister';
 import AttendancePercentage from './pages/reports/AttendancePercentage';
+import SuperAdminRoute from './components/SuperAdminRoute';
+import SuperAdminLogin from './pages/superAdmin/SuperAdminLogin';
+import SuperAdminDashboard from './pages/superAdmin/SuperAdminDashboard';
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/super-admin/login" element={<SuperAdminLogin />} />
+        <Route
+          path="/super-admin"
+          element={
+            <SuperAdminRoute>
+              <SuperAdminDashboard />
+            </SuperAdminRoute>
+          }
+        />
         <Route
           path="/dashboard"
           element={

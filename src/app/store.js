@@ -13,6 +13,7 @@ import { attendanceQuerySlice } from '../features/attendance/attendanceQuerySlic
 import { institutionQuerySlice } from '../features/institution/institutionQuerySlice';
 import { guardianQuerySlice } from '../features/guardian/guardianQuerySlice';
 import { reportQuerySlice } from '../features/report/reportQuerySlice';
+import { superAdminQuerySlice } from '../features/superAdmin/superAdminQuerySlice';
 
 export const store = configureStore({
   reducer: {
@@ -30,6 +31,7 @@ export const store = configureStore({
     [institutionQuerySlice.reducerPath]: institutionQuerySlice.reducer,
     [guardianQuerySlice.reducerPath]: guardianQuerySlice.reducer,
     [reportQuerySlice.reducerPath]: reportQuerySlice.reducer,
+    [superAdminQuerySlice.reducerPath]: superAdminQuerySlice.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
@@ -42,7 +44,8 @@ export const store = configureStore({
       .concat(attendanceQuerySlice.middleware)
       .concat(institutionQuerySlice.middleware)
       .concat(guardianQuerySlice.middleware)
-      .concat(reportQuerySlice.middleware),
+      .concat(reportQuerySlice.middleware)
+      .concat(superAdminQuerySlice.middleware),
 });
 
 export default store;

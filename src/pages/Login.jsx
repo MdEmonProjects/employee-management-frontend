@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { useNavigate, useLocation, Navigate, Link } from 'react-router-dom';
 import { loginSuccess } from '../features/auth/authSlice';
 import { useLoginMutation } from '../features/auth/authQuerySlice';
 import Brand from '../components/Brand';
@@ -120,6 +120,13 @@ export default function Login() {
             {isLoading ? 'Signing in…' : 'Continue'}
           </button>
         </form>
+
+        <Link
+          to="/super-admin/login"
+          className="mt-6 block text-center text-sm text-gray-500 hover:text-gray-900"
+        >
+          সুপার অ্যাডমিন লগইন
+        </Link>
       </div>
     </div>
   );
