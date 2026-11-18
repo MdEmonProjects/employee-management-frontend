@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useGetClassListQuery } from '../../features/class/classQuerySlice';
 import { useGetSessionsQuery } from '../../features/session/sessionQuerySlice';
 import { useGetCurrentInstitutionQuery } from '../../features/institution/institutionQuerySlice';
 import { downloadReportExcel } from '../../features/report/reportQuerySlice';
-import { WEEKDAYS, banglaNumber, buttonClass, inputClass, primaryButtonClass, printSheet, sheetCss } from './reportUtils';
+import { WEEKDAYS, banglaNumber, buttonClass, inputClass, primaryButtonClass, printSheet, sheetCss, sheetWidthPx } from './reportUtils';
 
 const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
 
@@ -113,11 +113,33 @@ export function ExportToolbar({ setup, onSetupChange, sheetRef, kind, params, ti
 }
 
 /** On-screen paper preview; the inner .rp-sheet element is what gets printed. */
-export function SheetPreview({ setup, sheetRef, children }) {
+export function SheetPreview({ setup, sheetRef, fit = false, children }) {
+  const outerRef = useRef(null);
+  const [scale, setScale] = useState(1);
+  useEffect(() => {
+    const outer = outerRef.current;
+    if (!fit || !outer || typeof ResizeObserver === 'undefined') {
+      setScale(1);
+      return undefined;
+    }
+    const natural = sheetWidthPx(setup.paper, setup.orientation);
+    const update = () => {
+      const style = getComputedStyle(outer);
+      const available = outer.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+      setScale(Math.min(1, Math.max(0.3, available / natural)));
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(outer);
+    return () => observer.disconnect();
+  }, [fit, setup.paper, setup.orientation]);
   return (
-    <div className="rp-screen overflow-x-auto rounded-xl border border-slate-200 bg-slate-200/60 p-3 sm:p-6 dark:border-slate-700 dark:bg-slate-800/60">
+    <div ref={outerRef} className="rp-screen overflow-x-auto rounded-xl border border-slate-200 bg-slate-200/60 p-3 sm:p-6 dark:border-slate-700 dark:bg-slate-800/60">
       <style>{sheetCss(setup.paper, setup.orientation)}</style>
-      <div ref={sheetRef} className="rp-sheet">{children}</div>
+      {/* Zoom sits on a wrapper so the printed sheet (sheetRef) is never scaled. */}
+      <div style={scale < 1 ? { zoom: scale } : undefined}>
+        <div ref={sheetRef} className="rp-sheet">{children}</div>
+      </div>
     </div>
   );
 }
@@ -168,8 +190,8 @@ export function ReportPage({ title, description, children }) {
   );
 }
 
-export function StatusBlock({ isError, isFetching, hasData }) {
-  if (isError) return <div className="rounded-lg bg-red-50 px-4 py-8 text-center text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">রিপোর্ট লোড করা যায়নি। আবার চেষ্টা করুন।</div>;
+export function StatusBlock({ isError, isFetching, hasData, message }) {
+  if (isError) return <div className="rounded-lg bg-red-50 px-4 py-8 text-center text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{typeof message === 'string' && message ? message : 'রিপোর্ট লোড করা যায়নি। আবার চেষ্টা করুন।'}</div>;
   if (isFetching && !hasData) return <div className="px-4 py-8 text-center text-sm text-slate-500">রিপোর্ট তৈরি হচ্ছে...</div>;
   return null;
 }

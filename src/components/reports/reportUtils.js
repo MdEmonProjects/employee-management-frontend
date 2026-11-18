@@ -35,6 +35,12 @@ export function usePageSetup(reportKey, fallback) {
 
 const PAPER_MM = { A4: [210, 297], A5: [148, 210] };
 const MARGIN_MM = 10;
+
+/** On-screen width of the paper preview in CSS pixels. */
+export const sheetWidthPx = (paper, orientation) => {
+  const [w, h] = PAPER_MM[paper] ?? PAPER_MM.A4;
+  return ((orientation === 'landscape' ? h : w) * 96) / 25.4;
+};
 const FONT_PX = { 'A4-portrait': 11, 'A4-landscape': 11, 'A5-portrait': 8.5, 'A5-landscape': 9.5 };
 
 export const sheetCss = (paper, orientation) => {
@@ -67,6 +73,8 @@ export const sheetCss = (paper, orientation) => {
 .rp-A { color: #b91c1c; font-weight: 700; }
 .rp-L { color: #b45309; font-weight: 700; }
 .rp-low { background: #fdecec; }
+.rp-table .rp-group td { background: #eef1f5; font-weight: 700; text-align: left; }
+.rp-group-count { font-weight: 400; color: #444; }
 .rp-legend { margin-top: 6px; color: #333; }
 .rp-sign { display: flex; justify-content: space-between; margin-top: 3.5em; break-inside: avoid; }
 .rp-sign span { border-top: 1px solid #333; padding-top: 2px; min-width: 12em; text-align: center; }

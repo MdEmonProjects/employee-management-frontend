@@ -21,7 +21,7 @@ import InstituteInfo from './pages/InstituteInfo';
 import StaffEntry from './pages/StaffEntry';
 import GuardianList from './pages/GuardianList';
 import GuardianLinks from './pages/GuardianLinks';
-import AbsentReport from './pages/reports/AbsentReport';
+import DailyReport from './pages/reports/DailyReport';
 import MonthlyRegister from './pages/reports/MonthlyRegister';
 import AttendancePercentage from './pages/reports/AttendancePercentage';
 import SuperAdminRoute from './components/SuperAdminRoute';
@@ -53,8 +53,9 @@ export default function App() {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="attendance" element={<Attendance />} />
           <Route path="reports">
-            <Route index element={<Navigate to="absent" replace />} />
-            <Route path="absent" element={<AbsentReport />} />
+            <Route index element={<Navigate to="daily" replace />} />
+            <Route path="daily" element={<DailyReport />} />
+            <Route path="absent" element={<Navigate to="/dashboard/reports/daily" replace />} />
             <Route path="monthly" element={<MonthlyRegister />} />
             <Route path="percentage" element={<AttendancePercentage />} />
           </Route>

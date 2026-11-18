@@ -17,14 +17,16 @@ export const reportQuerySlice = createApi({
     },
   }),
   endpoints: (builder) => ({
-    getAbsentReport: builder.query({ query: (params) => ({ url: 'absent', params: cleanParams(params) }) }),
+    getDailyReport: builder.query({ query: (params) => ({ url: 'daily', params: cleanParams(params) }) }),
+    getDailyReportOptions: builder.query({ query: () => 'daily/options' }),
     getMonthlyReport: builder.query({ query: (params) => ({ url: 'monthly', params: cleanParams(params) }) }),
     getPercentageReport: builder.query({ query: (params) => ({ url: 'percentage', params: cleanParams(params) }) }),
   }),
 });
 
 export const {
-  useGetAbsentReportQuery,
+  useGetDailyReportQuery,
+  useGetDailyReportOptionsQuery,
   useGetMonthlyReportQuery,
   useGetPercentageReportQuery,
 } = reportQuerySlice;

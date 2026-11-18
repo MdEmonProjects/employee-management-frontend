@@ -100,7 +100,7 @@ export const menuData = [
     route: 'reports',
     icon: 'FiFileText',
     subMenu: [
-      { id: '81', name: 'দৈনিক অনুপস্থিতি', route: 'absent', icon: '', subMenu: false },
+      { id: '81', name: 'দৈনিক বিস্তারিত রিপোর্ট', route: 'daily', icon: '', subMenu: false },
       { id: '82', name: 'মাসিক হাজিরা রেজিস্টার', route: 'monthly', icon: '', subMenu: false },
       { id: '83', name: 'উপস্থিতির হার', route: 'percentage', icon: '', subMenu: false },
     ],
