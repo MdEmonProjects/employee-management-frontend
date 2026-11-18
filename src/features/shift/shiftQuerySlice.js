@@ -68,6 +68,13 @@ export const shiftQuerySlice = createApi({
       }),
       invalidatesTags: ['TimeCheckList'],
     }),
+    deleteTimeCheck: builder.mutation({
+      query: (id) => ({
+        url: `delete_timecheck/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['TimeCheckList'],
+    }),
 
     // time_switch
     getTimeSwitchs: builder.query({
@@ -80,7 +87,7 @@ export const shiftQuerySlice = createApi({
         method: 'POST',
         body: data,
       }),
-      invalidatesTags: ['TimeSwitchs'],
+      invalidatesTags: ['TimeSwitchs', 'TimeCheckList'],
 
     }),
     updateTimeSwitch: builder.mutation({
@@ -89,14 +96,14 @@ export const shiftQuerySlice = createApi({
         method: 'PUT',
         body: data,
       }),
-      invalidatesTags: ['TimeSwitchs'],
+      invalidatesTags: ['TimeSwitchs', 'TimeCheckList'],
     }),
     deleteTimeSwitch: builder.mutation({
       query: (id) => ({
         url: `delete_time_switch/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['TimeSwitchs'],
+      invalidatesTags: ['TimeSwitchs', 'TimeCheckList'],
     }),
     getTimeShiftAssignmentOptions: builder.query({
       query: () => 'time_shift_assignment_options',
@@ -138,6 +145,7 @@ export const {
   useGetTimeCheckListQuery,
   useGetSingleTimeCheckQuery,
   useUpdateTimeCheckMutation,
+  useDeleteTimeCheckMutation,
   useGetTimeSwitchsQuery,
   useCreateTimeSwitchMutation,
   useUpdateTimeSwitchMutation,

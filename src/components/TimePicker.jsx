@@ -1,6 +1,90 @@
-import Flatpickr from "react-flatpickr";
+import { useEffect, useRef } from "react";
+import flatpickr from "flatpickr";
 import { Controller, useFormContext } from "react-hook-form";
 import "flatpickr/dist/flatpickr.min.css";
+
+const parseTimeString = (timeValue) => {
+  if (!timeValue) return null;
+  if (timeValue instanceof Date) return timeValue;
+  if (typeof timeValue === 'string') {
+    const date = new Date(timeValue);
+    if (!isNaN(date.getTime())) {
+      return new Date(2000, 0, 1, date.getUTCHours(), date.getUTCMinutes());
+    }
+  }
+  return null;
+};
+
+const toTimeOnly = (date) =>
+  date ? new Date(2000, 0, 1, date.getHours(), date.getMinutes()) : null;
+
+/*
+ * flatpickr is driven directly (not through react-flatpickr): react-flatpickr v4
+ * destroys and recreates the picker on every render, which closed the popup each
+ * time the hour/minute changed. Here the instance is created once and only the
+ * value is synced.
+ */
+const FlatpickrTimeInput = ({ id, value, onChange, onBlur, disabled, placeholder, timeFormat, className }) => {
+  const inputRef = useRef(null);
+  const pickerRef = useRef(null);
+  const onChangeRef = useRef(onChange);
+  const valueRef = useRef(value);
+  onChangeRef.current = onChange;
+  valueRef.current = value;
+
+  const is24h = timeFormat === '24h';
+
+  useEffect(() => {
+    const picker = flatpickr(inputRef.current, {
+      enableTime: true,
+      noCalendar: true,
+      allowInput: true,
+      time_24hr: is24h,
+      dateFormat: is24h ? "H:i" : "h:i K",
+      minuteIncrement: 1,
+      defaultHour: 0,
+      defaultMinute: 0,
+      onChange: (dates) => onChangeRef.current(toTimeOnly(dates[0])),
+    });
+    pickerRef.current = picker;
+    if (valueRef.current) picker.setDate(valueRef.current, false);
+
+    return () => {
+      picker.destroy();
+      pickerRef.current = null;
+    };
+  }, [is24h]);
+
+  useEffect(() => {
+    const picker = pickerRef.current;
+    if (!picker) return;
+
+    const next = value instanceof Date
+      ? value
+      : value ? picker.parseDate(value, picker.config.dateFormat) || parseTimeString(value) : null;
+    const current = picker.selectedDates[0];
+
+    if (!next) {
+      if (current) picker.clear(false);
+      return;
+    }
+    if (!current || current.getHours() !== next.getHours() || current.getMinutes() !== next.getMinutes()) {
+      picker.setDate(next, false);
+    }
+  }, [value]);
+
+  return (
+    <input
+      id={id}
+      ref={inputRef}
+      type="text"
+      disabled={disabled}
+      placeholder={placeholder}
+      onBlur={onBlur}
+      className={className}
+    />
+  );
+};
 
 const TimePicker = ({
   timeCalender,
@@ -15,26 +99,8 @@ const TimePicker = ({
     control,
     formState: { errors },
   } = useFormContext();
-  const parseTimeString = (timeValue) => {
-    if (!timeValue) return null;
-    if (typeof timeValue === 'string') {
-      const date = new Date(timeValue);
-      if (!isNaN(date.getTime())) {
-        const hours = date.getUTCHours();
-        const minutes = date.getUTCMinutes();
-        return new Date(2000, 0, 1, hours, minutes);
-      }
-    }
-
-    return timeValue instanceof Date ? timeValue : null;
-  };
-
-
 
   const initialDate = defaultValue ? parseTimeString(defaultValue) : null;
-  const getDateFormat = () => {
-    return timeFormat === '24h' ? "H:i" : "h:i K";
-  };
 
   return (
     <div>
@@ -54,45 +120,15 @@ const TimePicker = ({
         rules={{
           required: require ? require : false,
         }}
-        render={({ field: { onChange, value } }) => (
-          <Flatpickr
+        render={({ field: { onChange, onBlur, value } }) => (
+          <FlatpickrTimeInput
+            id={registerKey}
+            value={value}
+            onChange={onChange}
+            onBlur={onBlur}
             disabled={disable}
             placeholder={placeholder || "Select time"}
-            value={value}
-            onChange={(dates) => {
-              const selectedDate = dates[0];
-              if (selectedDate) {
-                const hours = selectedDate.getHours();
-                const minutes = selectedDate.getMinutes();
-                const timeOnly = new Date(2000, 0, 1, hours, minutes);
-                onChange(timeOnly);
-              } else {
-                onChange(null);
-              }
-            }}
-            options={{
-              enableTime: true,
-              noCalendar: true,
-              time_24hr: timeFormat === '24h',
-              dateFormat: getDateFormat(),
-              minuteIncrement: 1,
-              defaultHour: 0,
-              defaultMinute: 0,
-              formatDate: (date) => {
-                if (!date) return '';
-                const hours = date.getHours();
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-
-                if (timeFormat === '24h') {
-                  const h = String(hours).padStart(2, '0');
-                  return `${h}:${minutes}`;
-                } else {
-                  const h = hours % 12 || 12;
-                  const ampm = hours >= 12 ? 'PM' : 'AM';
-                  return `${h}:${minutes} ${ampm}`;
-                }
-              }
-            }}
+            timeFormat={timeFormat}
             className={`w-full font-default rounded-lg text-sm h-11 px-3 outline-none transition-all duration-200 ease-in-out bg-white text-gray-900 border border-gray-300 placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 hover:border-gray-400`}
           />
         )}

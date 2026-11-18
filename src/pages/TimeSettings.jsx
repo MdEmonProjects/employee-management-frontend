@@ -49,6 +49,21 @@ const formatTime = (timeStr) => {
   return `${convertBijoyToBengali(time)} ${period}`;
 };
 
+// Seconds since midnight, for ordering rows by time. Unparseable/empty values sort last.
+const timeToSeconds = (timeStr) => {
+  if (!timeStr) return Number.MAX_SAFE_INTEGER;
+
+  if (typeof timeStr === "string" && !timeStr.includes("T")) {
+    const match = timeStr.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+    if (!match) return Number.MAX_SAFE_INTEGER;
+    return Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3] || 0);
+  }
+
+  const date = timeStr instanceof Date ? timeStr : new Date(timeStr);
+  if (isNaN(date.getTime())) return Number.MAX_SAFE_INTEGER;
+  return date.getUTCHours() * 3600 + date.getUTCMinutes() * 60 + date.getUTCSeconds();
+};
+
 const parseTimeString = (timeValue) => {
   if (!timeValue) return null;
   if (typeof timeValue === "string") {
@@ -295,7 +310,7 @@ export default function TimeSetting() {
         {/* --- Form 1: Auto Switch Setting --- */}
         <FormProvider {...switchMethods}>
           <form onSubmit={handleSwitchSubmit(onSave)} className="space-y-4">
-            <section className={card}>
+            <section className={`${card} xl:h-full`}>
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="font-semibold text-[16px]">
                   ⚙ অটো সুইচ সেটিং{" "}
@@ -380,14 +395,16 @@ export default function TimeSetting() {
         </FormProvider>
 
         {/* Shift list – grouped by shift */}
-        <section className={card}>
+        {/* xl+: height follows the left form card; the table scrolls inside it */}
+        <section className={`${card} xl:flex xl:flex-col`}>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-semibold">📅 শিফট তালিকা</h2>
             <button type="button" className={btnBlue} onClick={openShiftEntryModal}>＋ নতুন শিফট যোগ করুন</button>
           </div>
-          <div className="overflow-x-auto rounded-lg bg-slate-50 dark:bg-slate-800/50">
+          <div className="xl:relative xl:min-h-64 xl:flex-1">
+          <div className="max-h-[calc(100vh-16rem)] min-h-64 overflow-auto thin-scrollbar rounded-lg bg-slate-50 xl:absolute xl:inset-0 xl:max-h-none xl:min-h-0 dark:bg-slate-800/50">
             <table className="w-full text-sm border-x border-t border-neutral-300">
-              <thead>
+              <thead className="sticky top-0 z-10 bg-slate-50 shadow-[0_1px_0_0_rgb(212_212_212)] dark:bg-slate-800">
                 <tr>
                   {["ক্রমিক", "সুইচ", "শুরু সময়", "লেট", "শেষ সময়", "অ্যাকশন"].map((h) => (
                     <th key={h} className={th}>{h}</th>
@@ -410,7 +427,10 @@ export default function TimeSetting() {
                 ) : (
                   displayShifts.map((shift) => {
                     const shiftName = shift.ShiftNameBangla || shift.ShiftNameEnglish || `শিফট #${convertBijoyToBengali(shift.ID)}`;
-                    const rows = shift.TimeSwitches || [];
+                    const rows = [...(shift.TimeSwitches || [])].sort(
+                      (a, b) => timeToSeconds(a.StartTime) - timeToSeconds(b.StartTime)
+                        || timeToSeconds(a.EndTime) - timeToSeconds(b.EndTime),
+                    );
                     return (
                       <React.Fragment key={shift.ID || shiftName}>
                         <tr>
@@ -482,6 +502,7 @@ export default function TimeSetting() {
                 )}
               </tbody>
             </table>
+          </div>
           </div>
         </section>
       </div>
@@ -765,3 +786,5 @@ function Panel({
     </div>
   );
 }
+
+

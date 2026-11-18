@@ -2,9 +2,11 @@ import { useState } from 'react';
 import SvgIcon from '../components/icons/SvgIcon';
 import SortableTable from '../components/SortableTable';
 import { showModal } from '../utils/ModalControlar';
-import { useGetTimeCheckListQuery } from '../features/shift/shiftQuerySlice';
+import { toast } from 'react-toastify';
+import { useDeleteTimeCheckMutation, useGetTimeCheckListQuery } from '../features/shift/shiftQuerySlice';
 export default function TimeCheckList() {
   const [search, setSearch] = useState('');
+  const [deleteTimeCheck, { isLoading: isDeleting }] = useDeleteTimeCheckMutation();
   const {
     data: timeCheckList,
     isLoading,
@@ -19,6 +21,18 @@ export default function TimeCheckList() {
   const openShiftEditModal = (timeCheck) => {
     showModal('সময় যাচাইয়ের ধরন সম্পাদনা', 'TIME_CHECK_EDIT', timeCheck.ID);
 
+  }
+
+  const onDelete = async (timeCheck) => {
+    const name = timeCheck.TypeNameBangla || timeCheck.TypeNameEnglish || '';
+    if (!window.confirm(`"${name}" ধরনটি মুছে ফেলবেন?`)) return;
+
+    try {
+      await deleteTimeCheck(timeCheck.ID).unwrap();
+      toast.success('সময় যাচাইয়ের ধরন মুছে ফেলা হয়েছে।');
+    } catch (error) {
+      toast.error(error?.data?.error || error?.data?.message || 'সময় যাচাইয়ের ধরন মুছে ফেলা যায়নি।');
+    }
   }
 
   const filteredTimeChecks = (timeCheckList || []).filter((timeCheck) =>
@@ -51,6 +65,11 @@ export default function TimeCheckList() {
           <button type='button' onClick={() => openShiftEditModal(row)} className="button--primary rounded-full bg-clay border-border px-5 py-2 text-[17px] font-medium text-white cursor-pointer">
             সম্পাদনা
           </button>
+          {row.ShiftUsageCount === 0 && (
+            <button type='button' disabled={isDeleting} onClick={() => onDelete(row)} className="rounded-full bg-red-600 px-5 py-2 text-[17px] font-medium text-white cursor-pointer hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60">
+              মুছুন
+            </button>
+          )}
         </div>
       ),
     },
